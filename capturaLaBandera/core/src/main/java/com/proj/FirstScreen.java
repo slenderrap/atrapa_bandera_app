@@ -6,6 +6,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 /** First screen of the application. Displayed after the application is created. */
@@ -28,17 +31,30 @@ public class FirstScreen implements Screen {
         game.viewport.apply();
         game.batch.setProjectionMatrix(game.viewport.getCamera().combined);
 
-        game.batch.begin();
-        Texture backwround = new Texture("mainMenu.png");
+        Skin skin = new Skin(Gdx.files.internal("uiskin.json"));
+
+        Texture buttonUp = new Texture("startButton.png");
+
+        Button button = new TextButton("START",skin);
+
         float worldWidth = game.viewport.getWorldWidth();
         float worldHeight = game.viewport.getWorldHeight();
+        button.setPosition(game.viewport.getScreenWidth()/2.5f,game.viewport.getScreenHeight()/6);
+        button.setSize(game.viewport.getScreenWidth()/5,game.viewport.getScreenHeight()/5);
+        game.batch.begin();
+        Texture backwround = new Texture("mainMenu.png");
+
+
+
         game.batch.draw(backwround, 0, 0, worldWidth, worldHeight);
         //game.batch.draw(game.backwround,0,0,game.viewport.getScreenWidth(),game.viewport.getScreenHeight());
 
 //        game.font.draw(game.batch, "Welcome To The Websockets App!!! ", 2.6f, 3f);
 //        game.font.draw(game.batch, "Tap anywhere to send the position to the server", 2.2f, 2.5f);
         game.batch.end();
-
+        game.stage.addActor(button);
+        game.stage.act(Gdx.graphics.getDeltaTime());
+        game.stage.draw();
         if (Gdx.input.isTouched() || Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
             game.setScreen(new GameScreen(game));
             dispose();

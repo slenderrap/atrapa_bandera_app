@@ -88,7 +88,8 @@ public class GameScreen implements Screen {
                                     System.out.println("up");
                                     vertical = "UP";
                                     Message mensaje = new Message(vertical,lado,0);
-                                    jsonMessage = json.toJson(mensaje);
+                                    wrapMessage mensFin = new wrapMessage(mensaje);
+                                    jsonMessage = json.toJson(mensFin);
 
                                     System.out.println(jsonMessage);
                                     socket.send(jsonMessage);
@@ -101,7 +102,10 @@ public class GameScreen implements Screen {
                                     System.out.println("down");
                                     vertical = "DOWN";
                                     Message mensaje = new Message(vertical,lado,0);
-                                    jsonMessage = json.toJson(mensaje);
+                                    wrapMessage mensFin = new wrapMessage(mensaje);
+                                    jsonMessage = json.toJson(mensFin);
+
+                                    System.out.println(jsonMessage);
                                     socket.send(jsonMessage);
                                 }
                             } else {
@@ -111,7 +115,11 @@ public class GameScreen implements Screen {
                                     vertical = "";
 
                                     Message mensaje = new Message(vertical,lado,0);
-                                    jsonMessage = json.toJson(mensaje);
+
+                                    wrapMessage mensFin = new wrapMessage(mensaje);
+                                    jsonMessage = json.toJson(mensFin);
+
+                                    System.out.println(jsonMessage);
                                     socket.send(jsonMessage);
                                 }
                             }
@@ -122,7 +130,11 @@ public class GameScreen implements Screen {
                                     System.out.println("left");
                                     lado = "LEFT";
                                     Message mensaje = new Message(vertical,lado,0);
-                                    jsonMessage = json.toJson(mensaje);
+
+                                    wrapMessage mensFin = new wrapMessage(mensaje);
+                                    jsonMessage = json.toJson(mensFin);
+
+                                    System.out.println(jsonMessage);
                                     socket.send(jsonMessage);
 
                                 }
@@ -134,7 +146,10 @@ public class GameScreen implements Screen {
                                     System.out.println("right");
                                     lado = "RIGHT";
                                     Message mensaje = new Message(vertical,lado,0);
-                                    jsonMessage = json.toJson(mensaje);
+                                    wrapMessage mensFin = new wrapMessage(mensaje);
+                                    jsonMessage = json.toJson(mensFin);
+
+                                    System.out.println(jsonMessage);
                                     socket.send(jsonMessage);
                                 }
 
@@ -144,7 +159,10 @@ public class GameScreen implements Screen {
                                     left = false;
                                     lado = "";
                                     Message mensaje = new Message(vertical,lado,0);
-                                    jsonMessage = json.toJson(mensaje);
+                                    wrapMessage mensFin = new wrapMessage(mensaje);
+                                    jsonMessage = json.toJson(mensFin);
+
+                                    System.out.println(jsonMessage);
                                     socket.send(jsonMessage);
                                 }
                             }
@@ -165,7 +183,10 @@ public class GameScreen implements Screen {
                         left = false;
                         right = false;
                         Message mensaje = new Message(vertical,lado,1);
-                        jsonMessage = json.toJson(mensaje);
+                        wrapMessage mensFin = new wrapMessage(mensaje);
+                        jsonMessage = json.toJson(mensFin);
+
+                        System.out.println(jsonMessage);
                         socket.send(jsonMessage);
                         return true;
                     }

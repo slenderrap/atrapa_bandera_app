@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -14,6 +15,7 @@ public class Main extends Game {
     public SpriteBatch batch;
     public BitmapFont font;
     public FitViewport viewport;
+    public Stage stage;
     //public Texture backwround;
 
 
@@ -22,8 +24,9 @@ public class Main extends Game {
         batch = new SpriteBatch();
         font = new BitmapFont();
         viewport = new FitViewport(8,5);
+        stage = new Stage();
 
-
+        Gdx.input.setInputProcessor(stage);
 
         font.setUseIntegerPositions(false);
         font.getData().setScale(viewport.getWorldHeight() / Gdx.graphics.getHeight());
