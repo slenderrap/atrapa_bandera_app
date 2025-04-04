@@ -3,12 +3,16 @@ package com.proj;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Json;
 import com.github.czyzby.websocket.WebSocket;
 import com.github.czyzby.websocket.WebSocketListener;
 import com.github.czyzby.websocket.WebSockets;
 import com.google.gson.Gson;
+
+import java.util.HashMap;
 
 public class GameScreen implements Screen {
     private float stateTime = 0;
@@ -26,6 +30,11 @@ public class GameScreen implements Screen {
     public String lado = "";
     public String vertical = "";
     private MapRender mapRenderer;
+    public int stop;
+    private String userId;
+    private GameState currentState;
+    private ShapeRenderer shapeRenderer = new ShapeRenderer();
+
 
 
     // Constructor
@@ -42,7 +51,7 @@ public class GameScreen implements Screen {
         socket.setSendGracefully(false);
         socket.addListener(new MyWSListener());
         socket.connect();
-        socket.send("Enviar dades");
+        //socket.send("Enviar dades");
 
 
     }
@@ -53,9 +62,24 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        //game.batch.setProjectionMatrix(game.camera.combined);
         game.batch.begin();
         mapRenderer.render(game.batch);
         game.batch.end();
+        if (currentState != null) {
+            shapeRenderer.setProjectionMatrix(game.camera.combined); // Usa la cámara
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            for (datosJugador p : currentState.players) {
+                if (p.color.equals("red")) shapeRenderer.setColor(Color.RED);
+                else if (p.color.equals("purple")) shapeRenderer.setColor(Color.PURPLE);
+                else shapeRenderer.setColor(Color.WHITE);
+
+                shapeRenderer.rect(p.x, p.y, p.width/2, p.height/2);
+            }
+            shapeRenderer.end();
+        }
+
 //            stateTime += delta;
 //
 //            // Solo enviar datos si la conexión está abierta y ha pasado al menos 1s
@@ -82,119 +106,93 @@ public class GameScreen implements Screen {
 
                     @Override
                     public boolean touchDragged(int screenX, int screenY, int pointer) {
-                        String jsonMessage;
-                        Gson json = new Gson();
-                        if (oldY > 0 || oldX > 0){
-                            if (oldY > screenY){
+                        // Verifica si hay cambios significativos en las coordenadas
 
-                                if (!up){
-                                    up = true;
-                                    down = false;
-                                    System.out.println("up");
-                                    vertical = "UP";
-                                    Message mensaje = new Message(vertical,lado,0);
-                                    wrapMessage mensFin = new wrapMessage(mensaje);
-                                    jsonMessage = json.toJson(mensFin);
+                        if (oldY > 0 || oldX > 0) {
+                            // Movimiento vertical
+                            if (oldY > screenY && !up) { // Movimiento hacia arriba
+                                up = true;
+                                down = false;
+                                vertical = "UP";
+                                stop = 0;
+                            } else if (oldY < screenY && !down) { // Movimiento hacia abajo
+                                down = true;
+                                up = false;
+                                vertical = "DOWN";
+                                stop = 0;
+                            } else if (up || down) { // Detener movimiento vertical
 
-                                    System.out.println(jsonMessage);
-                                    jsonMessage = jsonMessage.toString();
-                                    socket.send(jsonMessage);
-                                }
-                            } else if (oldY < screenY) {
+                                up = false;
+                                down = false;
+                                vertical = "";
+                                stop = 1;
+                            }
 
-                                if (!down){
-                                    down = true;
-                                    up = false;
-                                    System.out.println("down");
-                                    vertical = "DOWN";
-                                    Message mensaje = new Message(vertical,lado,0);
-                                    wrapMessage mensFin = new wrapMessage(mensaje);
-                                    jsonMessage = json.toJson(mensFin);
+                            // Movimiento horizontal
+                            if (oldX > screenX && !left) { // Movimiento hacia la izquierda
 
-                                    System.out.println(jsonMessage);
-                                    socket.send(jsonMessage);
-                                }
-                            } else {
-                                if(up || down){
-                                    down = false;
-                                    up = false;
-                                    vertical = "";
+                                left = true;
+                                right = false;
+                                lado = "LEFT";
+                                stop = 0;
+                            } else if (oldX < screenX && !right) { // Movimiento hacia la derecha
 
-                                    Message mensaje = new Message(vertical,lado,0);
-
-                                    wrapMessage mensFin = new wrapMessage(mensaje);
-                                    jsonMessage = json.toJson(mensFin);
-
-                                    System.out.println(jsonMessage);
-                                    socket.send(jsonMessage);
+                                right = true;
+                                left = false;
+                                lado = "RIGHT";
+                                stop = 0;
+                            } else if (right || left) { // Detener movimiento horizontal
+                                right = false;
+                                left = false;
+                                lado = "";
+                                if (stop !=0){
+                                    stop = 1;
                                 }
                             }
-                            if (oldX > screenX){
-                                if (!left){
-                                    left = true;
-                                    right = false;
-                                    System.out.println("left");
-                                    lado = "LEFT";
-                                    Message mensaje = new Message(vertical,lado,0);
-
-                                    wrapMessage mensFin = new wrapMessage(mensaje);
-                                    jsonMessage = json.toJson(mensFin);
-
-                                    System.out.println(jsonMessage);
-                                    socket.send(jsonMessage);
-
-                                }
-
-                            } else if (oldX < screenX) {
-                                if (!right){
-                                    right = true;
-                                    left = false;
-                                    System.out.println("right");
-                                    lado = "RIGHT";
-                                    Message mensaje = new Message(vertical,lado,0);
-                                    wrapMessage mensFin = new wrapMessage(mensaje);
-                                    jsonMessage = json.toJson(mensFin);
-
-                                    System.out.println(jsonMessage);
-                                    socket.send(jsonMessage);
-                                }
-
-                            } else {
-                                if (right || left){
-                                    right = false;
-                                    left = false;
-                                    lado = "";
-                                    Message mensaje = new Message(vertical,lado,0);
-                                    wrapMessage mensFin = new wrapMessage(mensaje);
-                                    jsonMessage = json.toJson(mensFin);
-
-                                    System.out.println(jsonMessage);
-                                    socket.send(jsonMessage);
-                                }
+                            if (!lado.isEmpty() || !vertical.isEmpty()){
+                                sendMovementMessage(lado, vertical, stop);
                             }
-                            //String message = screenX+","+screenY+","+oldX+","+oldY;
-                            //socket.send(vertical+","+lado);
+                            // Actualiza las coordenadas antiguas
+                            oldX = screenX;
+                            oldY = screenY;
+
                             return true;
                         }
                         return false;
                     }
+
+                    // Método auxiliar para enviar un mensaje de movimiento
+                    private void sendMovementMessage(String horizontal, String vertical, int stop) {
+                        Gson json = new Gson();
+                        HashMap<String, Object> message = new HashMap<>();
+                        message.put("type", "move");
+                        message.put("horizontal", horizontal != null ? horizontal : "");
+                        message.put("vertical", vertical != null ? vertical : "");
+                        message.put("stop", stop);
+
+                        System.out.println("JSON enviado: " + message);
+                        String jsonMessage = json.toJson(message);
+                        System.out.println("JSON enviado: " + jsonMessage);
+
+                        if (socket != null && socket.isOpen()) {
+                            socket.send(jsonMessage);
+                        } else {
+                            System.out.println("Error: La conexión WebSocket no está abierta.");
+                        }
+                    }
                     @Override
                     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-                        String jsonMessage;
-                        Gson json = new Gson();
+
                         System.out.println("STOP");
 
                         up = false;
                         down = false;
                         left = false;
                         right = false;
-                        Message mensaje = new Message(vertical,lado,1);
-                        wrapMessage mensFin = new wrapMessage(mensaje);
-                        jsonMessage = json.toJson(mensFin);
-
-                        System.out.println(jsonMessage);
-
-                        socket.send(jsonMessage);
+                        lado="";
+                        vertical="";
+                        stop = 1;
+                        sendMovementMessage(lado, vertical, stop);
                         return true;
                     }
                 });
@@ -202,6 +200,15 @@ public class GameScreen implements Screen {
 
 
 
+        }
+        if (currentState != null && userId != null) {
+            for (datosJugador p : currentState.players) {
+                if (p.id.equals(userId)) {
+                    game.camera.position.set(p.x + p.width / 2f, p.y + p.height / 2f, 0);
+                    game.camera.update();
+                    break;
+                }
+            }
         }
     }
 
@@ -237,7 +244,7 @@ public class GameScreen implements Screen {
         @Override
         public boolean onOpen(WebSocket webSocket) {
             System.out.println("WebSocket conectado.");
-            webSocket.send("Hola desde el cliente!");  // Ahora enviamos el mensaje aquí
+            //webSocket.send("Hola desde el cliente!");  // Ahora enviamos el mensaje aquí
             return true;
         }
 
@@ -249,7 +256,22 @@ public class GameScreen implements Screen {
 
         @Override
         public boolean onMessage(WebSocket webSocket, String packet) {
-            System.out.println("Mensaje recibido: " + packet);
+            //System.out.println("Mensaje recibido: " + packet);
+            Gson gson = new Gson();
+
+            if (packet.contains("\"type\":\"newClient\"")) {
+                HashMap<String, String> newClientMsg = gson.fromJson(packet, HashMap.class);
+                if (userId == null){
+                    userId = newClientMsg.get("id");
+                    System.out.println("Mi ID es: " + userId);
+                }
+            } else if (packet.contains("\"type\":\"update\"")) {
+                HashMap data = gson.fromJson(packet, HashMap.class);
+                Object gameStateObj = data.get("gameState");
+                String gameStateJson = gson.toJson(gameStateObj);
+                currentState = gson.fromJson(gameStateJson, GameState.class);
+            }
+
             return false;
         }
 

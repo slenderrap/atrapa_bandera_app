@@ -48,7 +48,7 @@ public class FirstScreen implements Screen {
         float worldWidth = game.viewport.getWorldWidth();
         float worldHeight = game.viewport.getWorldHeight();
         button.setPosition(game.viewport.getScreenWidth()/2,game.viewport.getScreenHeight()/6);
-        button.setSize(game.viewport.getScreenWidth()/3,game.viewport.getScreenHeight()/3);
+        button.setSize(game.viewport.getScreenWidth()/3,game.viewport.getScreenHeight()/3 );
         game.batch.begin();
         Texture backwround = new Texture("mainMenu.png");
 
