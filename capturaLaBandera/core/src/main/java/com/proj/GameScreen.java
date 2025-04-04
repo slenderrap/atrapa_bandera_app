@@ -8,6 +8,7 @@ import com.badlogic.gdx.utils.Json;
 import com.github.czyzby.websocket.WebSocket;
 import com.github.czyzby.websocket.WebSocketListener;
 import com.github.czyzby.websocket.WebSockets;
+import com.google.gson.Gson;
 
 public class GameScreen implements Screen {
     private float stateTime = 0;
@@ -78,7 +79,7 @@ public class GameScreen implements Screen {
                     @Override
                     public boolean touchDragged(int screenX, int screenY, int pointer) {
                         String jsonMessage;
-                        Json json = new Json();
+                        Gson json = new Gson();
                         if (oldY > 0 || oldX > 0){
                             if (oldY > screenY){
 
@@ -92,6 +93,7 @@ public class GameScreen implements Screen {
                                     jsonMessage = json.toJson(mensFin);
 
                                     System.out.println(jsonMessage);
+                                    jsonMessage = jsonMessage.toString();
                                     socket.send(jsonMessage);
                                 }
                             } else if (oldY < screenY) {
@@ -175,7 +177,7 @@ public class GameScreen implements Screen {
                     @Override
                     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
                         String jsonMessage;
-                        Json json = new Json();
+                        Gson json = new Gson();
                         System.out.println("STOP");
 
                         up = false;
@@ -187,6 +189,7 @@ public class GameScreen implements Screen {
                         jsonMessage = json.toJson(mensFin);
 
                         System.out.println(jsonMessage);
+
                         socket.send(jsonMessage);
                         return true;
                     }
