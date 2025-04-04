@@ -25,6 +25,7 @@ public class GameScreen implements Screen {
     public boolean right;
     public String lado = "";
     public String vertical = "";
+    private MapRender mapRenderer;
 
 
     // Constructor
@@ -52,6 +53,9 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        game.batch.begin();
+        mapRenderer.render(game.batch);
+        game.batch.end();
 //            stateTime += delta;
 //
 //            // Solo enviar datos si la conexión está abierta y ha pasado al menos 1s
@@ -203,7 +207,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-
+        mapRenderer = new MapRender();
     }
 
     @Override
@@ -224,6 +228,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        mapRenderer.dispose();
         socket.close();
     }
 

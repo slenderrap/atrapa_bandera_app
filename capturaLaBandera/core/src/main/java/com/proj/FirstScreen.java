@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
@@ -33,20 +34,21 @@ public class FirstScreen implements Screen {
         game.viewport.apply();
         game.batch.setProjectionMatrix(game.viewport.getCamera().combined);
 
-        Skin skin = new Skin(Gdx.files.internal("uiskin.json"));
+        //Skin skin = new Skin(Gdx.files.internal("uiskin.json"));
 
-        Texture buttonUp = new Texture("startButton.png");
+        Texture buttonUp = new Texture("start.png");
+        BitmapFont font = new BitmapFont();
 
-        Button.ButtonStyle style = new Button.ButtonStyle();
+        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
 
         style.up = new TextureRegionDrawable(new TextureRegion(buttonUp));
-
-        Button button = new Button(style);
+        style.font = font;
+        TextButton button = new TextButton("START",style);
 
         float worldWidth = game.viewport.getWorldWidth();
         float worldHeight = game.viewport.getWorldHeight();
-        button.setPosition(game.viewport.getScreenWidth()/2.5f,game.viewport.getScreenHeight()/6);
-        button.setSize(game.viewport.getScreenWidth()/5,game.viewport.getScreenHeight()/5);
+        button.setPosition(game.viewport.getScreenWidth()/2,game.viewport.getScreenHeight()/6);
+        button.setSize(game.viewport.getScreenWidth()/3,game.viewport.getScreenHeight()/3);
         game.batch.begin();
         Texture backwround = new Texture("mainMenu.png");
 
