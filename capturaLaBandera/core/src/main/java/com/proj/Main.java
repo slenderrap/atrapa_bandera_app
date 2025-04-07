@@ -29,6 +29,7 @@ public class Main extends Game {
         viewport = new FitViewport(80,50,camera);
         viewport.apply();
         camera.position.set(40,30,0);
+
         camera.update();
         stage = new Stage();
 

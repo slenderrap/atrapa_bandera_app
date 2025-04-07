@@ -30,7 +30,7 @@ public class GameScreen implements Screen {
     public String lado = "";
     public String vertical = "";
     private MapRender mapRenderer;
-    public int stop;
+    public String stop;
     private String userId;
     private GameState currentState;
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
@@ -62,23 +62,25 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        game.camera.setToOrtho(true);
+
         //game.batch.setProjectionMatrix(game.camera.combined);
         game.batch.begin();
         mapRenderer.render(game.batch);
         game.batch.end();
-        if (currentState != null) {
-            shapeRenderer.setProjectionMatrix(game.camera.combined); // Usa la cámara
-
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            for (datosJugador p : currentState.players) {
-                if (p.color.equals("red")) shapeRenderer.setColor(Color.RED);
-                else if (p.color.equals("purple")) shapeRenderer.setColor(Color.PURPLE);
-                else shapeRenderer.setColor(Color.WHITE);
-
-                shapeRenderer.rect(p.x, p.y, p.width/2, p.height/2);
-            }
-            shapeRenderer.end();
-        }
+//        if (currentState != null) {
+//            shapeRenderer.setProjectionMatrix(game.camera.combined); // Usa la cámara
+//
+//            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+//            for (datosJugador p : currentState.players) {
+//                if (p.color.equals("red")) shapeRenderer.setColor(Color.RED);
+//                else if (p.color.equals("purple")) shapeRenderer.setColor(Color.PURPLE);
+//                else shapeRenderer.setColor(Color.WHITE);
+//
+//                shapeRenderer.rect(p.x, p.y, p.width/2, p.height/2);
+//            }
+//            shapeRenderer.end();
+//        }
 
 //            stateTime += delta;
 //
@@ -113,19 +115,21 @@ public class GameScreen implements Screen {
                             if (oldY > screenY && !up) { // Movimiento hacia arriba
                                 up = true;
                                 down = false;
-                                vertical = "UP";
-                                stop = 0;
+                                vertical = "up";
+                                stop = "";
                             } else if (oldY < screenY && !down) { // Movimiento hacia abajo
                                 down = true;
                                 up = false;
-                                vertical = "DOWN";
-                                stop = 0;
+                                vertical = "down";
+                                stop = "";
                             } else if (up || down) { // Detener movimiento vertical
 
                                 up = false;
                                 down = false;
                                 vertical = "";
-                                stop = 1;
+                                if (stop !=""){
+                                    stop = "none";
+                                }
                             }
 
                             // Movimiento horizontal
@@ -133,20 +137,20 @@ public class GameScreen implements Screen {
 
                                 left = true;
                                 right = false;
-                                lado = "LEFT";
-                                stop = 0;
+                                lado = "left";
+                                stop = "";
                             } else if (oldX < screenX && !right) { // Movimiento hacia la derecha
 
                                 right = true;
                                 left = false;
-                                lado = "RIGHT";
-                                stop = 0;
+                                lado = "right";
+                                stop = "";
                             } else if (right || left) { // Detener movimiento horizontal
                                 right = false;
                                 left = false;
                                 lado = "";
-                                if (stop !=0){
-                                    stop = 1;
+                                if (stop !=""){
+                                    stop = "none";
                                 }
                             }
                             if (!lado.isEmpty() || !vertical.isEmpty()){
@@ -162,14 +166,21 @@ public class GameScreen implements Screen {
                     }
 
                     // Método auxiliar para enviar un mensaje de movimiento
-                    private void sendMovementMessage(String horizontal, String vertical, int stop) {
+                    private void sendMovementMessage(String horizontal, String vertical, String stop) {
                         Gson json = new Gson();
+                        System.out.println(vertical+" "+horizontal);
+                        if (vertical != "" && horizontal != ""){
+                           horizontal = horizontal.substring(0,1).toUpperCase()+horizontal.substring(1).toLowerCase();
+                        }
                         HashMap<String, Object> message = new HashMap<>();
-                        message.put("type", "move");
-                        message.put("horizontal", horizontal != null ? horizontal : "");
-                        message.put("vertical", vertical != null ? vertical : "");
-                        message.put("stop", stop);
-
+                        message.put("type", "direction");
+                        if (!stop.equals("")){
+                            message.put("value", stop);
+                        }
+                        else {
+                            message.put("value", vertical+horizontal);
+                            //message.put("value", vertical != null ? vertical : "");
+                        }
                         System.out.println("JSON enviado: " + message);
                         String jsonMessage = json.toJson(message);
                         System.out.println("JSON enviado: " + jsonMessage);
@@ -191,7 +202,7 @@ public class GameScreen implements Screen {
                         right = false;
                         lado="";
                         vertical="";
-                        stop = 1;
+                        stop = "none";
                         sendMovementMessage(lado, vertical, stop);
                         return true;
                     }
@@ -201,15 +212,53 @@ public class GameScreen implements Screen {
 
 
         }
+        datosJugador myPlayer = null;
         if (currentState != null && userId != null) {
+
             for (datosJugador p : currentState.players) {
                 if (p.id.equals(userId)) {
-                    game.camera.position.set(p.x + p.width / 2f, p.y + p.height / 2f, 0);
-                    game.camera.update();
+                    myPlayer = p;
                     break;
                 }
             }
         }
+        if (myPlayer != null) {
+            // CENTRAMOS LA CÁMARA en el jugador
+            game.camera.position.set(
+                myPlayer.x + myPlayer.width / 2f,
+                myPlayer.y + myPlayer.height / 2f,
+                0
+            );
+            game.camera.update();
+
+        }
+        game.viewport.apply();
+        game.batch.setProjectionMatrix(game.camera.combined);
+        shapeRenderer.setProjectionMatrix(game.camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        if (currentState != null) {
+            for (datosJugador p : currentState.players) {
+                switch (p.color) {
+                    case "red":
+                        shapeRenderer.setColor(Color.RED);
+                        break;
+                    case "purple":
+                        shapeRenderer.setColor(Color.PURPLE);
+                        break;
+                    case "blue":
+                        shapeRenderer.setColor(Color.BLUE);
+                        break;
+                    case "orange":
+                        shapeRenderer.setColor(Color.ORANGE);
+                        break;
+                    default:
+                        shapeRenderer.setColor(Color.WHITE);
+                        break;
+                }
+                shapeRenderer.rect(p.x, p.y, p.width/2, p.height/2);
+            }
+        }
+        shapeRenderer.end();
     }
 
     @Override
