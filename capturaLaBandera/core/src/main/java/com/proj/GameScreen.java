@@ -63,7 +63,7 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        game.camera.setToOrtho(true);
+        //game.camera.setToOrtho(true);
 
         //game.batch.setProjectionMatrix(game.camera.combined);
         game.batch.begin();
@@ -121,15 +121,15 @@ public class GameScreen implements Screen {
 
                         if (oldY > 0 || oldX > 0) {
                             // Movimiento vertical
-                            if (oldY > screenY && !up) { // Movimiento hacia arriba
-                                up = true;
-                                down = false;
-                                vertical = "up";
-                                stop = "";
-                            } else if (oldY < screenY && !down) { // Movimiento hacia abajo
+                            if (oldY > screenY && !down) { // Movimiento hacia arriba
                                 down = true;
                                 up = false;
                                 vertical = "down";
+                                stop = "";
+                            } else if (oldY < screenY && !up) { // Movimiento hacia abajo
+                                up = true;
+                                down = false;
+                                vertical = "up";
                                 stop = "";
                             } else if (up || down) { // Detener movimiento vertical
 
