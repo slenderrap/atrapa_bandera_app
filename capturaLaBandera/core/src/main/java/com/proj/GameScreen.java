@@ -34,6 +34,7 @@ public class GameScreen implements Screen {
     private String userId;
     private GameState currentState;
     private ShapeRenderer shapeRenderer = new ShapeRenderer();
+    public String numJugadores;
 
 
 
@@ -67,6 +68,14 @@ public class GameScreen implements Screen {
         //game.batch.setProjectionMatrix(game.camera.combined);
         game.batch.begin();
         mapRenderer.render(game.batch);
+        game.batch.end();
+
+
+        game.batch.setProjectionMatrix(game.uiCamera.combined);
+        game.batch.begin();
+        game.font.setColor(Color.WHITE);
+        game.font.getData().setScale(0.3f);
+        game.font.draw(game.batch, "Jugadores: " + numJugadores, 2, 48); // Esquina superior izquierda
         game.batch.end();
 //        if (currentState != null) {
 //            shapeRenderer.setProjectionMatrix(game.camera.combined); // Usa la cámara
@@ -225,11 +234,12 @@ public class GameScreen implements Screen {
         if (myPlayer != null) {
             // CENTRAMOS LA CÁMARA en el jugador
             game.camera.position.set(
-                myPlayer.x + myPlayer.width / 2f,
-                myPlayer.y + myPlayer.height / 2f,
+                myPlayer.x + myPlayer.width / 2,
+                myPlayer.y + myPlayer.height / 2,
                 0
             );
             game.camera.update();
+
 
         }
         game.viewport.apply();
@@ -259,6 +269,8 @@ public class GameScreen implements Screen {
             }
         }
         shapeRenderer.end();
+
+
     }
 
     @Override
@@ -305,7 +317,7 @@ public class GameScreen implements Screen {
 
         @Override
         public boolean onMessage(WebSocket webSocket, String packet) {
-            //System.out.println("Mensaje recibido: " + packet);
+            System.out.println("Mensaje recibido: " + packet);
             Gson gson = new Gson();
 
             if (packet.contains("\"type\":\"newClient\"")) {
@@ -319,6 +331,12 @@ public class GameScreen implements Screen {
                 Object gameStateObj = data.get("gameState");
                 String gameStateJson = gson.toJson(gameStateObj);
                 currentState = gson.fromJson(gameStateJson, GameState.class);
+            } else if (packet.contains("\"type\":\"newSize\"")) {
+                HashMap data = gson.fromJson(packet, HashMap.class);
+                Object playersCount = data.get("size");
+                String count = gson.toJson(playersCount);
+                System.out.println("Cantidad Jugadores: "+count);
+                numJugadores = count;
             }
 
             return false;

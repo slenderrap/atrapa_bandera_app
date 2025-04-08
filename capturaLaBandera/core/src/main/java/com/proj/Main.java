@@ -17,15 +17,18 @@ public class Main extends Game {
     public BitmapFont font;
     public FitViewport viewport;
     public Stage stage;
+
     //public Texture backwround;
     public OrthographicCamera camera;
-
+    public OrthographicCamera uiCamera;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
         font = new BitmapFont();
         camera = new OrthographicCamera();
+        uiCamera = new OrthographicCamera();
+        uiCamera.setToOrtho(false,80,50);
         viewport = new FitViewport(80,50,camera);
         viewport.apply();
         camera.position.set(40,30,0);

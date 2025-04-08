@@ -8,60 +8,121 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 
-public class MapRender {
-    private Texture tileset;
-    private TextureRegion[][] tileRegions;
-    private int[][] tileMap;
+import java.util.ArrayList;
+import java.util.List;
 
-    private int tileWidth = 16;
-    private int tileHeight = 16;
-    private int tilesetCols;
+public class MapRender {
+    private List<Texture> tilesets = new ArrayList<>();
+    private List<TextureRegion[][]> tileRegionsList = new ArrayList<>();
+    private List<int[][]> tileMaps = new ArrayList<>();
+    private List<Integer> tileWidths = new ArrayList<>();
+    private List<Integer> tileHeights = new ArrayList<>();
 
     private int mapWidth;
     private int mapHeight;
 
-    public MapRender(){
-        tileset = new Texture(Gdx.files.internal("mapa/FieldsTileset.png"));
-        tileRegions = TextureRegion.split(tileset, tileWidth, tileHeight);
-        tilesetCols = tileset.getWidth() / tileWidth;
+    // Textura y posición de la llave
+    private Texture keyTexture;
+    private float keyX, keyY;
+    private float keyWidth, keyHeight;
 
-
+    public MapRender() {
         FileHandle file = Gdx.files.internal("mapa/game_data.json");
         JsonValue base = new JsonReader().parse(file);
-        JsonValue mapa = base.get("levels").get(0).get("layers").get(0).get("tileMap");
-        //System.out.println(base.get("levels").get(0));
-        mapHeight = mapa.size;
-        mapWidth = mapa.get(0).size;
-        tileMap = new int[mapHeight][mapWidth];
 
-        for (int i = 0; i < mapHeight; i++) {
-            JsonValue fila = mapa.get(i);
-            for (int j = 0; j < mapWidth; j++) {
-                tileMap[i][j] = fila.getInt(j);
+        // Obtener el primer nivel
+        JsonValue level = base.get("levels").get(0);
+        JsonValue layers = level.get("layers");
+
+        // Iterar sobre todas las capas
+        for (int i = 0; i < layers.size; i++) {
+            JsonValue layer = layers.get(i);
+
+            // Cargar tileset
+            String tilesSheetFile = layer.getString("tilesSheetFile");
+            Texture tileset = new Texture(Gdx.files.internal("mapa/" + tilesSheetFile));
+            tilesets.add(tileset);
+
+            // Dividir tileset en regiones
+            int tileWidth = layer.getInt("tilesWidth");
+            int tileHeight = layer.getInt("tilesHeight");
+            TextureRegion[][] regions = TextureRegion.split(tileset, tileWidth, tileHeight);
+            tileRegionsList.add(regions);
+            tileWidths.add(tileWidth);
+            tileHeights.add(tileHeight);
+
+            // Cargar tileMap
+            JsonValue tileMapJson = layer.get("tileMap");
+            int height = tileMapJson.size;
+            int width = tileMapJson.get(0).size;
+            int[][] tileMap = new int[height][width];
+
+            for (int y = 0; y < height; y++) {
+                JsonValue fila = tileMapJson.get(y);
+                for (int x = 0; x < width; x++) {
+                    tileMap[y][x] = fila.getInt(x);
+                }
+            }
+            tileMaps.add(tileMap);
+
+            // Guardar dimensiones del mapa
+            if (i == 0) {
+                mapWidth = width;
+                mapHeight = height;
+            }
+        }
+
+        // Cargar la llave desde "sprites"
+        JsonValue sprites = level.get("sprites");
+        for (int i = 0; i < sprites.size; i++) {
+            JsonValue sprite = sprites.get(i);
+            if ("key".equals(sprite.getString("type"))) {
+                String imageFile = sprite.getString("imageFile");
+                keyTexture = new Texture(Gdx.files.internal("mapa/" + imageFile));
+                keyX = sprite.getFloat("x");
+                keyY = sprite.getFloat("y");
+                keyWidth = sprite.getFloat("width");
+                keyHeight = sprite.getFloat("height");
             }
         }
     }
+
     public void render(SpriteBatch batch) {
-        for (int y = 0; y < mapHeight; y++) {
-            for (int x = 0; x < mapWidth; x++) {
-                int tileIndex = tileMap[y][x];
+        // Dibujar el mapa
+        for (int layerIndex = 0; layerIndex < tileMaps.size(); layerIndex++) {
+            int[][] tileMap = tileMaps.get(layerIndex);
+            TextureRegion[][] tileRegions = tileRegionsList.get(layerIndex);
+            int tileWidth = tileWidths.get(layerIndex);
+            int tileHeight = tileHeights.get(layerIndex);
+            int tilesetCols = tilesets.get(layerIndex).getWidth() / tileWidth;
 
+            for (int y = 0; y < mapHeight; y++) {
+                for (int x = 0; x < mapWidth; x++) {
+                    int tileIndex = tileMap[y][x];
 
-                if (tileIndex < 0) continue;
+                    if (tileIndex < 0) continue;
 
-                int row = tileIndex / tilesetCols;
-                int col = tileIndex % tilesetCols;
+                    int row = tileIndex / tilesetCols;
+                    int col = tileIndex % tilesetCols;
 
-                TextureRegion region = tileRegions[row][col];
-                batch.draw(region, x * tileWidth, (mapHeight - y - 1) * tileHeight);
+                    TextureRegion region = tileRegions[row][col];
+                    batch.draw(region, x * tileWidth, (mapHeight - y - 1) * tileHeight);
+                }
             }
+        }
+
+        // Dibujar la llave
+        if (keyTexture != null) {
+            batch.draw(keyTexture, keyX, keyY, keyWidth, keyHeight);
         }
     }
 
-    public void dispose(){
-        tileset.dispose();
+    public void dispose() {
+        for (Texture tileset : tilesets) {
+            tileset.dispose();
+        }
+        if (keyTexture != null) {
+            keyTexture.dispose();
+        }
     }
-
-
 }
-
