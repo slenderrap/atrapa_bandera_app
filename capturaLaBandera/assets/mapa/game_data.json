@@ -100,9 +100,9 @@
           "type": "key",
           "x": 275,
           "y": 225,
-          "width": 32,
+          "width": 16,
           "height": 32,
-          "imageFile": "KEY.png"
+          "imageFile": "key.png"
         }
       ]
     }

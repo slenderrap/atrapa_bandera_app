@@ -43,6 +43,7 @@ public class FirstScreen implements Screen {
 
         style.up = new TextureRegionDrawable(new TextureRegion(buttonUp));
         style.font = font;
+        style.font.getData().setScale(5f);
         TextButton button = new TextButton("START",style);
 
         float worldWidth = game.viewport.getWorldWidth();
