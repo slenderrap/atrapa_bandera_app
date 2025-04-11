@@ -26,6 +26,38 @@ public class MapRender {
     private float keyX, keyY;
     private float keyWidth, keyHeight;
 
+    public float getKeyX() {
+        return keyX;
+    }
+
+    public void setKeyX(float keyX) {
+        this.keyX = keyX;
+    }
+
+    public float getKeyY() {
+        return keyY;
+    }
+
+    public void setKeyY(float keyY) {
+        this.keyY = keyY;
+    }
+
+    public float getKeyWidth() {
+        return keyWidth;
+    }
+
+    public void setKeyWidth(float keyWidth) {
+        this.keyWidth = keyWidth;
+    }
+
+    public float getKeyHeight() {
+        return keyHeight;
+    }
+
+    public void setKeyHeight(float keyHeight) {
+        this.keyHeight = keyHeight;
+    }
+
     public MapRender() {
         FileHandle file = Gdx.files.internal("mapa/game_data.json");
         JsonValue base = new JsonReader().parse(file);

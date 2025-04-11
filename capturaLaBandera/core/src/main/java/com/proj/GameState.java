@@ -6,5 +6,5 @@ public class GameState {
     public int tickCounter;
     public String level;
     public List<datosJugador> players;
-    public String flagOwnerId;
+    public List<Key> keys;
 }

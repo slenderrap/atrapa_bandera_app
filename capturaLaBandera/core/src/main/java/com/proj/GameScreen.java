@@ -71,16 +71,13 @@ public class GameScreen implements Screen {
 
         //game.batch.setProjectionMatrix(game.camera.combined);
         game.batch.begin();
+
         mapRenderer.render(game.batch);
-        game.batch.end();
-
-
         game.batch.setProjectionMatrix(game.uiCamera.combined);
-        game.batch.begin();
-
         game.font.setColor(Color.WHITE);
         game.font.getData().setScale(0.3f);
         game.font.draw(game.batch, "Jugadores: " + numJugadores, 2, 48); // Esquina superior izquierda
+
         game.batch.end();
 //        if (currentState != null) {
 //            shapeRenderer.setProjectionMatrix(game.camera.combined); // Usa la cámara
@@ -393,6 +390,13 @@ public class GameScreen implements Screen {
                     //System.out.println("Posición Y recibida: " + p.y);
                     p.y = mapaAlturaPx - p.y - p.height;
                     //System.out.println("Posición Y modificada: " + p.y);
+                }
+                for (Key key: currentState.keys) {
+                    mapRenderer.setKeyX(key.x);
+                    mapRenderer.setKeyY(key.y);
+                    mapRenderer.setKeyWidth(key.width);
+                    mapRenderer.setKeyHeight(key.height);
+
                 }
 
                 } else if (packet.contains("\"type\":\"newSize\"")) {
