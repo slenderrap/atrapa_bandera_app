@@ -12,9 +12,10 @@ public class AndroidLauncher extends AndroidApplication {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();
+        AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
         CommonWebSockets.initiate();
-        configuration.useImmersiveMode = true; // Recommended, but not required.
-        initialize(new Main(), configuration);
+        config.useImmersiveMode = true;
+
+        initialize(new Main(), config);
     }
 }

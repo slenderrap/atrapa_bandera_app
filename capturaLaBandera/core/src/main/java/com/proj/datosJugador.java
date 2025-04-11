@@ -6,5 +6,5 @@ public class datosJugador {
     public float width, height;
     public float speedX, speedY;
     public String direction;
-    public String color;
+    public String race;
 }

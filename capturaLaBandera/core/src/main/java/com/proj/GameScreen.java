@@ -38,6 +38,7 @@ public class GameScreen implements Screen {
 
 
 
+
     // Constructor
     public GameScreen(Main game) {
         this.game = game;
@@ -48,6 +49,7 @@ public class GameScreen implements Screen {
 //            System.out.println("Conectando a: " + wsUrl);
 
         //socket = WebSockets.newSocket(WebSockets.toWebSocketUrl(address, port));
+
         socket = WebSockets.newSocket(WebSockets.toSecureWebSocketUrl(address, port));
         socket.setSendGracefully(false);
         socket.addListener(new MyWSListener());
@@ -63,7 +65,9 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        game.camera.setToOrtho(true);
+        //game.camera.setToOrtho(true);
+
+
 
         //game.batch.setProjectionMatrix(game.camera.combined);
         game.batch.begin();
@@ -73,6 +77,7 @@ public class GameScreen implements Screen {
 
         game.batch.setProjectionMatrix(game.uiCamera.combined);
         game.batch.begin();
+
         game.font.setColor(Color.WHITE);
         game.font.getData().setScale(0.3f);
         game.font.draw(game.batch, "Jugadores: " + numJugadores, 2, 48); // Esquina superior izquierda
@@ -99,123 +104,170 @@ public class GameScreen implements Screen {
 //                socket.send("Enviar dades");
 //            }
 
-        if (Gdx.input.justTouched() && socket.isOpen()) {
 
-                Gdx.input.setInputProcessor(new InputAdapter() {
-                    @Override
-                    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-                        if (Gdx.input.getX()<game.viewport.getScreenWidth()/2){
-                            oldX = screenX;
-                            oldY = screenY;
-                            return true;
-                        } else {
-                            oldX = 0;
-                            oldY = 0;
-                        }
-                        return false;
+        if (socket.isOpen()) {
+
+            Dpad dPad = new Dpad(new Dpad.DPadListener() {
+
+                public void onDirectionPressed(String direction) {
+                    // Envía al servidor el movimiento
+                    System.out.println("Moviendo: " + direction);
+                    // ejemplo:
+                    // websocket.send("move:" + direction);
+                    sendMovementMessage("",direction,"");
+                }
+
+                public void onDirectionReleased(String direction) {
+                    // Envía al servidor que ha soltado
+                    System.out.println("Parar: " + direction);
+                    // ejemplo:
+                    // websocket.send("stop:" + direction);
+                    sendMovementMessage("","","none");
+                }
+                private void sendMovementMessage(String horizontal, String vertical, String stop) {
+                    Gson json = new Gson();
+                    System.out.println(vertical + " " + horizontal);
+                    if (vertical != "" && horizontal != "") {
+                        horizontal = horizontal.substring(0, 1).toUpperCase() + horizontal.substring(1).toLowerCase();
                     }
-
-                    @Override
-                    public boolean touchDragged(int screenX, int screenY, int pointer) {
-                        // Verifica si hay cambios significativos en las coordenadas
-
-                        if (oldY > 0 || oldX > 0) {
-                            // Movimiento vertical
-                            if (oldY > screenY && !down) { // Movimiento hacia arriba
-                                up = true;
-                                down = false;
-                                vertical = "up";
-                                stop = "";
-                            } else if (oldY < screenY && !up) { // Movimiento hacia abajo
-                                down = true;
-                                up = false;
-                                vertical = "down";
-                                stop = "";
-                            } else if (up || down) { // Detener movimiento vertical
-
-                                up = false;
-                                down = false;
-                                vertical = "";
-                                if (stop !=""){
-                                    stop = "none";
-                                }
-                            }
-
-                            // Movimiento horizontal
-                            if (oldX > screenX && !left) { // Movimiento hacia la izquierda
-
-                                left = true;
-                                right = false;
-                                lado = "left";
-                                stop = "";
-                            } else if (oldX < screenX && !right) { // Movimiento hacia la derecha
-
-                                right = true;
-                                left = false;
-                                lado = "right";
-                                stop = "";
-                            } else if (right || left) { // Detener movimiento horizontal
-                                right = false;
-                                left = false;
-                                lado = "";
-                                if (stop !=""){
-                                    stop = "none";
-                                }
-                            }
-                            if (!lado.isEmpty() || !vertical.isEmpty()){
-                                sendMovementMessage(lado, vertical, stop);
-                            }
-                            // Actualiza las coordenadas antiguas
-                            oldX = screenX;
-                            oldY = screenY;
-
-                            return true;
-                        }
-                        return false;
+                    HashMap<String, Object> message = new HashMap<>();
+                    message.put("type", "direction");
+                    if (!stop.equals("")) {
+                        message.put("value", stop);
+                    } else {
+                        message.put("value", vertical + horizontal);
+                        //message.put("value", vertical != null ? vertical : "");
                     }
+                    System.out.println("JSON enviado: " + message);
+                    String jsonMessage = json.toJson(message);
+                    System.out.println("JSON enviado: " + jsonMessage);
 
-                    // Método auxiliar para enviar un mensaje de movimiento
-                    private void sendMovementMessage(String horizontal, String vertical, String stop) {
-                        Gson json = new Gson();
-                        System.out.println(vertical+" "+horizontal);
-                        if (vertical != "" && horizontal != ""){
-                           horizontal = horizontal.substring(0,1).toUpperCase()+horizontal.substring(1).toLowerCase();
-                        }
-                        HashMap<String, Object> message = new HashMap<>();
-                        message.put("type", "direction");
-                        if (!stop.equals("")){
-                            message.put("value", stop);
-                        }
-                        else {
-                            message.put("value", vertical+horizontal);
-                            //message.put("value", vertical != null ? vertical : "");
-                        }
-                        System.out.println("JSON enviado: " + message);
-                        String jsonMessage = json.toJson(message);
-                        System.out.println("JSON enviado: " + jsonMessage);
-
-                        if (socket != null && socket.isOpen()) {
-                            socket.send(jsonMessage);
-                        } else {
-                            System.out.println("Error: La conexión WebSocket no está abierta.");
-                        }
+                    if (socket != null && socket.isOpen()) {
+                        socket.send(jsonMessage);
+                    } else {
+                        System.out.println("Error: La conexión WebSocket no está abierta.");
                     }
-                    @Override
-                    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+                }
+            }, game);
+            dPad.setPosition(50, 50);
+            game.Pad.addActor(dPad);
+            game.Pad.draw();
 
-                        System.out.println("STOP");
-
-                        up = false;
-                        down = false;
-                        left = false;
-                        right = false;
-                        lado="";
-                        vertical="";
-                        stop = "none";
-                        sendMovementMessage(lado, vertical, stop);
-                        return true;
-                    }
-                });
+//                Gdx.input.setInputProcessor(new InputAdapter() {
+//                    @Override
+//                    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+//                        if (Gdx.input.getX()<game.viewport.getScreenWidth()/2){
+//                            oldX = screenX;
+//                            oldY = screenY;
+//                            return true;
+//                        } else {
+//                            oldX = 0;
+//                            oldY = 0;
+//                        }
+//                        return false;
+//                    }
+//
+//                    @Override
+//                    public boolean touchDragged(int screenX, int screenY, int pointer) {
+//                        // Verifica si hay cambios significativos en las coordenadas
+//
+//                        if (oldY > 0 || oldX > 0) {
+//                            // Movimiento vertical
+//                            if (oldY > screenY && !up) { // Movimiento hacia arriba
+//                                up = true;
+//                                down = false;
+//                                vertical = "up";
+//                                stop = "";
+//                            } else if (oldY < screenY && !down) { // Movimiento hacia abajo
+//                                down = true;
+//                                up = false;
+//                                vertical = "down";
+//                                stop = "";
+//                            } else if (up || down) { // Detener movimiento vertical
+//
+//                                up = false;
+//                                down = false;
+//                                vertical = "";
+//                                if (stop !=""){
+//                                    stop = "none";
+//                                }
+//                            }
+//
+//                            // Movimiento horizontal
+//                            if (oldX > screenX && !left) { // Movimiento hacia la izquierda
+//
+//                                left = true;
+//                                right = false;
+//                                lado = "left";
+//                                stop = "";
+//                            } else if (oldX < screenX && !right) { // Movimiento hacia la derecha
+//
+//                                right = true;
+//                                left = false;
+//                                lado = "right";
+//                                stop = "";
+//                            } else if (right || left) { // Detener movimiento horizontal
+//                                right = false;
+//                                left = false;
+//                                lado = "";
+//                                if (stop !=""){
+//                                    stop = "none";
+//                                }
+//                            }
+//                            if (!lado.isEmpty() || !vertical.isEmpty()){
+//                                sendMovementMessage(lado, vertical, stop);
+//                            }
+//                            // Actualiza las coordenadas antiguas
+//                            oldX = screenX;
+//                            oldY = screenY;
+//
+//                            return true;
+//                        }
+//                        return false;
+//                    }
+//
+//                    // Método auxiliar para enviar un mensaje de movimiento
+//                    private void sendMovementMessage(String horizontal, String vertical, String stop) {
+//                        Gson json = new Gson();
+//                        System.out.println(vertical+" "+horizontal);
+//                        if (vertical != "" && horizontal != ""){
+//                           horizontal = horizontal.substring(0,1).toUpperCase()+horizontal.substring(1).toLowerCase();
+//                        }
+//                        HashMap<String, Object> message = new HashMap<>();
+//                        message.put("type", "direction");
+//                        if (!stop.equals("")){
+//                            message.put("value", stop);
+//                        }
+//                        else {
+//                            message.put("value", vertical+horizontal);
+//                            //message.put("value", vertical != null ? vertical : "");
+//                        }
+//                        System.out.println("JSON enviado: " + message);
+//                        String jsonMessage = json.toJson(message);
+//                        System.out.println("JSON enviado: " + jsonMessage);
+//
+//                        if (socket != null && socket.isOpen()) {
+//                            socket.send(jsonMessage);
+//                        } else {
+//                            System.out.println("Error: La conexión WebSocket no está abierta.");
+//                        }
+//                    }
+//                    @Override
+//                    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+//
+//                        System.out.println("STOP");
+//
+//                        up = false;
+//                        down = false;
+//                        left = false;
+//                        right = false;
+//                        lado="";
+//                        vertical="";
+//                        stop = "none";
+//                        sendMovementMessage(lado, vertical, stop);
+//                        return true;
+//                    }
+//                });
 
 
 
@@ -242,33 +294,36 @@ public class GameScreen implements Screen {
 
 
         }
+
         game.viewport.apply();
         game.batch.setProjectionMatrix(game.camera.combined);
         shapeRenderer.setProjectionMatrix(game.camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         if (currentState != null) {
             for (datosJugador p : currentState.players) {
-                switch (p.color) {
-                    case "red":
+                switch (p.race) {
+                    case "human":
                         shapeRenderer.setColor(Color.RED);
                         break;
-                    case "purple":
+                    case "orc":
                         shapeRenderer.setColor(Color.PURPLE);
                         break;
-                    case "blue":
+                    case "vampire":
                         shapeRenderer.setColor(Color.BLUE);
                         break;
-                    case "orange":
+                    case "slime":
                         shapeRenderer.setColor(Color.ORANGE);
                         break;
                     default:
                         shapeRenderer.setColor(Color.WHITE);
                         break;
                 }
-                shapeRenderer.rect(p.x, p.y, p.width/2, p.height/2);
+                shapeRenderer.rect(p.x, p.y, p.width, p.height);
             }
         }
+
         shapeRenderer.end();
+
 
 
     }
@@ -317,7 +372,7 @@ public class GameScreen implements Screen {
 
         @Override
         public boolean onMessage(WebSocket webSocket, String packet) {
-            System.out.println("Mensaje recibido: " + packet);
+            //System.out.println("Mensaje recibido: " + packet);
             Gson gson = new Gson();
 
             if (packet.contains("\"type\":\"newClient\"")) {
@@ -330,8 +385,17 @@ public class GameScreen implements Screen {
                 HashMap data = gson.fromJson(packet, HashMap.class);
                 Object gameStateObj = data.get("gameState");
                 String gameStateJson = gson.toJson(gameStateObj);
+                int tileHeight = mapRenderer.getTileHeight(); // tamaño de tile en píxeles
+                int mapaAlturaPx = (int) (mapRenderer.getMapHeight() * tileHeight);
                 currentState = gson.fromJson(gameStateJson, GameState.class);
-            } else if (packet.contains("\"type\":\"newSize\"")) {
+                 // o una constante si no tienes método
+                for (datosJugador p : currentState.players) {
+                    //System.out.println("Posición Y recibida: " + p.y);
+                    p.y = mapaAlturaPx - p.y - p.height;
+                    //System.out.println("Posición Y modificada: " + p.y);
+                }
+
+                } else if (packet.contains("\"type\":\"newSize\"")) {
                 HashMap data = gson.fromJson(packet, HashMap.class);
                 Object playersCount = data.get("size");
                 String count = gson.toJson(playersCount);

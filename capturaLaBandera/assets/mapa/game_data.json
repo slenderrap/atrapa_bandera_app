@@ -103,6 +103,12 @@
           "width": 16,
           "height": 32,
           "imageFile": "key.png"
+        },
+        {
+          "type": "human",
+          "width": 16,
+          "height": 16,
+          "imageFile": "humanMove.png"
         }
       ]
     }

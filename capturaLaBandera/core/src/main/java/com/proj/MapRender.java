@@ -106,14 +106,14 @@ public class MapRender {
                     int col = tileIndex % tilesetCols;
 
                     TextureRegion region = tileRegions[row][col];
-                    batch.draw(region, x * tileWidth, (mapHeight - y - 1) * tileHeight);
+                    batch.draw(region, x * tileWidth, (mapHeight -1 - y) * tileHeight);
                 }
             }
         }
 
         // Dibujar la llave
         if (keyTexture != null) {
-            batch.draw(keyTexture, keyX, keyY, keyWidth, keyHeight);
+            batch.draw(keyTexture, keyX, (mapHeight - 1) * tileHeights.get(0) - keyY, keyWidth, keyHeight);
         }
     }
 
@@ -124,5 +124,13 @@ public class MapRender {
         if (keyTexture != null) {
             keyTexture.dispose();
         }
+    }
+
+    public float getMapHeight() {
+        return this.mapHeight;
+    }
+
+    public int getTileHeight() {
+        return tileHeights.get(0);
     }
 }
