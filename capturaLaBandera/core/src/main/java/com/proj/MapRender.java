@@ -108,6 +108,9 @@ public class MapRender {
             batch.draw(keyTexture, keyX, (mapHeight * tileHeights.get(0)) - keyY - keyHeight + offsetY, keyWidth, keyHeight);
         }
     }
+    public void clearKey() {
+        keyTexture = null;
+    }
 
     public void dispose() {
         for (Texture tileset : tilesets) {

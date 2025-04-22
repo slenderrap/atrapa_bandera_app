@@ -11,6 +11,7 @@ public class datosJugador {
     public String race;
     public boolean onIce;
 
+
     public int lastRenderDirection = 1;
 
 }

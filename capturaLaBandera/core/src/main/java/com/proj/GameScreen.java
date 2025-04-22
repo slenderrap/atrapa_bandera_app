@@ -32,11 +32,15 @@ public class GameScreen implements Screen {
     private final int IDLE = -1, UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3;
     private int direccion = IDLE;
     private int lastDirection = DOWN;
+    private Texture smallKeyTexture;
+
 
     private Dpad dPad;
 
     private final HashMap<String, Animation<TextureRegion>[]> raceAnimations = new HashMap<>();
     private final HashMap<String, int[]> rowOrderByRace = new HashMap<>();
+
+    private String keyOwnerId = "";
 
     public GameScreen(Main game, WebSocket socket, String userId) {
         this.game = game;
@@ -47,6 +51,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
+        smallKeyTexture = new Texture(Gdx.files.internal("mapa/key.png"));
+
         mapRenderer = new MapRender();
         Gdx.input.setInputProcessor(game.Pad);
         dPad = new Dpad(new Dpad.DPadListener() {
@@ -90,10 +96,10 @@ public class GameScreen implements Screen {
         dPad.setPosition(50, 50);
         game.Pad.addActor(dPad);
 
-        rowOrderByRace.put("human", new int[]{3, 0, 1, 2});
-        rowOrderByRace.put("orc", new int[]{1, 0, 2, 3});
-        rowOrderByRace.put("vampire", new int[]{1, 0, 2, 3});
-        rowOrderByRace.put("slime", new int[]{1, 0, 2, 3});
+        rowOrderByRace.put("human", new int[]{0, 3, 1, 2});
+        rowOrderByRace.put("orc", new int[]{0, 1, 2, 3});
+        rowOrderByRace.put("vampire", new int[]{0, 1, 2, 3});
+        rowOrderByRace.put("slime", new int[]{0, 1, 2, 3});
 
         raceAnimations.put("human", loadAnimations("sprites/Unarmed_Run_full.png", rowOrderByRace.get("human")));
         raceAnimations.put("orc", loadAnimations("sprites/orc_run_full.png", rowOrderByRace.get("orc")));
@@ -127,7 +133,6 @@ public class GameScreen implements Screen {
         mapRenderer.render(game.batch);
         game.batch.end();
 
-
         game.Pad.act(delta);
         game.Pad.draw();
 
@@ -158,19 +163,34 @@ public class GameScreen implements Screen {
                 Animation<TextureRegion>[] animations = raceAnimations.get(p.race);
                 if (animations == null) continue;
 
-                boolean estaEnMovimiento = (direccion != IDLE);
-                int dirParaRender = estaEnMovimiento ? direccion : lastDirection;
-                if (dirParaRender < 0 || dirParaRender >= animations.length) dirParaRender = DOWN;
-                if (estaEnMovimiento) lastDirection = dirParaRender;
+                boolean estaEnMovimiento = (p.speedX != 0 || p.speedY != 0);
+                int direccionJugador = IDLE;
+                if (p.speedY > 0) direccionJugador = UP;
+                else if (p.speedY < 0) direccionJugador = DOWN;
+                else if (p.speedX < 0) direccionJugador = LEFT;
+                else if (p.speedX > 0) direccionJugador = RIGHT;
 
-                TextureRegion currentFrame = animations[dirParaRender].getKeyFrame(
+                if (direccionJugador == IDLE) direccionJugador = p.lastRenderDirection;
+                else p.lastRenderDirection = direccionJugador;
+
+                TextureRegion currentFrame = animations[direccionJugador].getKeyFrame(
                     estaEnMovimiento ? stateTime : 0,
                     true
                 );
 
                 game.batch.begin();
                 game.batch.draw(currentFrame, p.x, p.y, p.width, p.height);
+
+                if (currentState.keys != null && !currentState.keys.isEmpty()) {
+                    datosLlave key = currentState.keys.get(0);
+                    if (key.keyOwnerId != null && key.keyOwnerId.equals(p.id)) {
+                        float keyDrawX = p.x + p.width / 2f - 6;
+                        float keyDrawY = p.y + p.height + 4;
+                        game.batch.draw(smallKeyTexture, keyDrawX, keyDrawY, 12, 24); // más pequeño
+                    }
+                }
                 game.batch.end();
+
             }
         }
     }
@@ -188,13 +208,15 @@ public class GameScreen implements Screen {
     public void dispose() {
         mapRenderer.dispose();
         socket.close();
+        if (smallKeyTexture != null) {
+            smallKeyTexture.dispose();
+        }
+
     }
 
     private class MyWSListener implements WebSocketListener {
-        @Override
-        public boolean onOpen(WebSocket webSocket) { return true; }
-        @Override
-        public boolean onClose(WebSocket webSocket, int closeCode, String reason) { return false; }
+        @Override public boolean onOpen(WebSocket webSocket) { return true; }
+        @Override public boolean onClose(WebSocket webSocket, int closeCode, String reason) { return false; }
 
         @Override
         public boolean onMessage(WebSocket webSocket, String packet) {
@@ -212,9 +234,11 @@ public class GameScreen implements Screen {
                 }
                 if (currentState.keys != null && !currentState.keys.isEmpty()) {
                     datosLlave key = currentState.keys.get(0);
-                    Gdx.app.postRunnable(() -> {
-                        mapRenderer.setKey(key.x, key.y, key.width, key.height);
-                    });
+                    if (!key.pickedUp) {
+                        Gdx.app.postRunnable(() -> mapRenderer.setKey(key.x, key.y, key.width, key.height));
+                    } else {
+                        Gdx.app.postRunnable(() -> mapRenderer.clearKey());
+                    }
                 }
             } else if (packet.contains("\"type\":\"gameOver\"")) {
                 Gdx.app.postRunnable(() -> {

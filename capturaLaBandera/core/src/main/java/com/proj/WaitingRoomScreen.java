@@ -40,7 +40,7 @@ public class WaitingRoomScreen implements Screen {
         Skin skin = new Skin(Gdx.files.internal("uiskin.json"));
 
         playerCountLabel = new Label("Jugadores conectados: 0", skin);
-        countdownLabel = new Label("Esperando a otros jugadores...", skin);
+        countdownLabel = new Label("Esperando...", skin);
 
         playerCountLabel.setFontScale(2f);
         countdownLabel.setFontScale(2f);
