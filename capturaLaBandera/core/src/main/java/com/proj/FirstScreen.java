@@ -43,13 +43,13 @@ public class FirstScreen implements Screen {
 
         style.up = new TextureRegionDrawable(new TextureRegion(buttonUp));
         style.font = font;
-        style.font.getData().setScale(5f);
+        style.font.getData().setScale(2.5f);
         TextButton button = new TextButton("START",style);
 
         float worldWidth = game.viewport.getWorldWidth();
         float worldHeight = game.viewport.getWorldHeight();
-        button.setPosition(game.viewport.getScreenWidth()/2,game.viewport.getScreenHeight()/6);
-        button.setSize(game.viewport.getScreenWidth()/3,game.viewport.getScreenHeight()/3 );
+        button.setPosition(game.viewport.getScreenWidth()/2.5f,game.viewport.getScreenHeight()/6);
+        button.setSize(game.viewport.getScreenWidth()/5,game.viewport.getScreenHeight()/5 );
         game.batch.begin();
         Texture backwround = new Texture("mainMenu.png");
 

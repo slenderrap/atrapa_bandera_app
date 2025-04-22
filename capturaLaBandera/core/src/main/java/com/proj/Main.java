@@ -11,12 +11,13 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 
 public class Main extends Game {
     public SpriteBatch batch;
     public BitmapFont font;
-    public FitViewport viewport;
+    public StretchViewport viewport;
     public Stage stage;
     public Stage Pad;
     //public Texture backwround;
@@ -31,7 +32,7 @@ public class Main extends Game {
         camera = new OrthographicCamera();
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false,80,50);
-        viewport = new FitViewport(110,80,camera);
+        viewport = new StretchViewport(110,80,camera);
         viewport.apply();
         camera.position.set(40,30,0);
 
