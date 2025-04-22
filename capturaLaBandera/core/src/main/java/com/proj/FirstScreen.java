@@ -65,7 +65,8 @@ public class FirstScreen implements Screen {
         game.stage.act(Gdx.graphics.getDeltaTime());
         game.stage.draw();
         if (Gdx.input.isTouched() || Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
-            game.setScreen(new GameScreen(game));
+            //game.setScreen(new GameScreen(game));
+            game.setScreen(new WaitingRoomScreen(game));
             dispose();
         }
     }

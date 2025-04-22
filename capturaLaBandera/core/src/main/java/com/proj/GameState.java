@@ -7,4 +7,5 @@ public class GameState {
     public String level;
     public List<datosJugador> players;
     public String flagOwnerId;
+    public List<datosLlave> keys;
 }

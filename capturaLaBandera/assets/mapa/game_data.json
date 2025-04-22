@@ -94,7 +94,40 @@
           "visible": true
         }
       ],
-      "zones": [],
+      "zones": [
+        {
+          "type": "spawn_human",
+          "x": 17,
+          "y": 33,
+          "width": 110,
+          "height": 110,
+          "color": "blue"
+        },
+        {
+          "type": "spawn_orc",
+          "x": 18,
+          "y": 369,
+          "width": 110,
+          "height": 110,
+          "color": "yellow"
+        },
+        {
+          "type": "spawn_vampire",
+          "x": 896,
+          "y": 33,
+          "width": 110,
+          "height": 110,
+          "color": "red"
+        },
+        {
+          "type": "spawn_slime",
+          "x": 897,
+          "y": 368,
+          "width": 110,
+          "height": 110,
+          "color": "orange"
+        }
+      ],
       "sprites": [
         {
           "type": "key",

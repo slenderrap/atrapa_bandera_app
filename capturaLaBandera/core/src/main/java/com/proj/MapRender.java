@@ -21,29 +21,26 @@ public class MapRender {
     private int mapWidth;
     private int mapHeight;
 
-    // Textura y posición de la llave
     private Texture keyTexture;
     private float keyX, keyY;
     private float keyWidth, keyHeight;
+
+    private float keyStateTime = 0;
 
     public MapRender() {
         FileHandle file = Gdx.files.internal("mapa/game_data.json");
         JsonValue base = new JsonReader().parse(file);
 
-        // Obtener el primer nivel
         JsonValue level = base.get("levels").get(0);
         JsonValue layers = level.get("layers");
 
-        // Iterar sobre todas las capas
         for (int i = 0; i < layers.size; i++) {
             JsonValue layer = layers.get(i);
 
-            // Cargar tileset
             String tilesSheetFile = layer.getString("tilesSheetFile");
             Texture tileset = new Texture(Gdx.files.internal("mapa/" + tilesSheetFile));
             tilesets.add(tileset);
 
-            // Dividir tileset en regiones
             int tileWidth = layer.getInt("tilesWidth");
             int tileHeight = layer.getInt("tilesHeight");
             TextureRegion[][] regions = TextureRegion.split(tileset, tileWidth, tileHeight);
@@ -51,7 +48,6 @@ public class MapRender {
             tileWidths.add(tileWidth);
             tileHeights.add(tileHeight);
 
-            // Cargar tileMap
             JsonValue tileMapJson = layer.get("tileMap");
             int height = tileMapJson.size;
             int width = tileMapJson.get(0).size;
@@ -65,30 +61,26 @@ public class MapRender {
             }
             tileMaps.add(tileMap);
 
-            // Guardar dimensiones del mapa
             if (i == 0) {
                 mapWidth = width;
                 mapHeight = height;
             }
         }
+    }
 
-        // Cargar la llave desde "sprites"
-        JsonValue sprites = level.get("sprites");
-        for (int i = 0; i < sprites.size; i++) {
-            JsonValue sprite = sprites.get(i);
-            if ("key".equals(sprite.getString("type"))) {
-                String imageFile = sprite.getString("imageFile");
-                keyTexture = new Texture(Gdx.files.internal("mapa/" + imageFile));
-                keyX = sprite.getFloat("x");
-                keyY = sprite.getFloat("y");
-                keyWidth = sprite.getFloat("width");
-                keyHeight = sprite.getFloat("height");
-            }
+    public void setKey(float x, float y, float width, float height) {
+        if (keyTexture == null) {
+            keyTexture = new Texture(Gdx.files.internal("mapa/key.png"));
         }
+        this.keyX = x;
+        this.keyY = y;
+        this.keyWidth = width;
+        this.keyHeight = height;
     }
 
     public void render(SpriteBatch batch) {
-        // Dibujar el mapa
+        keyStateTime += Gdx.graphics.getDeltaTime();
+
         for (int layerIndex = 0; layerIndex < tileMaps.size(); layerIndex++) {
             int[][] tileMap = tileMaps.get(layerIndex);
             TextureRegion[][] tileRegions = tileRegionsList.get(layerIndex);
@@ -106,14 +98,14 @@ public class MapRender {
                     int col = tileIndex % tilesetCols;
 
                     TextureRegion region = tileRegions[row][col];
-                    batch.draw(region, x * tileWidth, (mapHeight - y - 1) * tileHeight);
+                    batch.draw(region, x * tileWidth, (mapHeight - 1 - y) * tileHeight);
                 }
             }
         }
 
-        // Dibujar la llave
         if (keyTexture != null) {
-            batch.draw(keyTexture, keyX, keyY, keyWidth, keyHeight);
+            float offsetY = (float)Math.sin(keyStateTime * 2f) * 2f; // Velocidad * amplitud
+            batch.draw(keyTexture, keyX, (mapHeight * tileHeights.get(0)) - keyY - keyHeight + offsetY, keyWidth, keyHeight);
         }
     }
 
@@ -124,5 +116,13 @@ public class MapRender {
         if (keyTexture != null) {
             keyTexture.dispose();
         }
+    }
+
+    public float getMapHeight() {
+        return this.mapHeight;
+    }
+
+    public int getTileHeight() {
+        return tileHeights.get(0);
     }
 }
