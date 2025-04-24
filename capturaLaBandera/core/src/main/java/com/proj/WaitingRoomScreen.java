@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -50,7 +51,17 @@ public class WaitingRoomScreen implements Screen {
         table.center();
         table.add(playerCountLabel).pad(20).row();
         table.add(countdownLabel).pad(20);
+        float worldWidth = game.viewport.getWorldWidth();
+        float worldHeight = game.viewport.getWorldHeight();
+        game.batch.begin();
+        Texture backwround = new Texture("mainMenu.png");
 
+        game.batch.draw(backwround, 0, 0, worldWidth, worldHeight);
+        //game.batch.draw(game.backwround,0,0,game.viewport.getScreenWidth(),game.viewport.getScreenHeight());
+
+//        game.font.draw(game.batch, "Welcome To The Websockets App!!! ", 2.6f, 3f);
+//        game.font.draw(game.batch, "Tap anywhere to send the position to the server", 2.2f, 2.5f);
+        game.batch.end();
         stage.addActor(table);
 
         // Conexión WebSocket
@@ -58,19 +69,19 @@ public class WaitingRoomScreen implements Screen {
         socket.addListener(new WebSocketListener() {
             @Override
             public boolean onOpen(WebSocket webSocket) {
-                System.out.println("[WaitingRoom] Conectado al servidor");
+                System.out.println("Conectado al servidor");
                 return true;
             }
 
             @Override
             public boolean onClose(WebSocket webSocket, int closeCode, String reason) {
-                System.out.println("[WaitingRoom] WebSocket cerrado");
+                System.out.println("WebSocket cerrado");
                 return false;
             }
 
             @Override
             public boolean onMessage(WebSocket webSocket, String packet) {
-                System.out.println("[WaitingRoom] Mensaje: " + packet);
+                System.out.println("Mensaje: " + packet);
                 Gson gson = new Gson();
                 if (packet.contains("\"type\":\"newSize\"")) {
                     HashMap data = gson.fromJson(packet, HashMap.class);
@@ -92,6 +103,8 @@ public class WaitingRoomScreen implements Screen {
                         userId = newClientMsg.get("id");
                         System.out.println("Mi ID en WaitingRoom es: " + userId);
                     }
+                } else if (packet.contains("\"type\":\"update\"")) {
+                    Gdx.app.postRunnable(() -> countdownLabel.setText("La partida esta en marcha"));
                 }
                 return false;
             }

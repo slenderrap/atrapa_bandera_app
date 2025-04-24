@@ -96,12 +96,12 @@ public class GameScreen implements Screen {
         dPad.setPosition(50, 50);
         game.Pad.addActor(dPad);
 
-        rowOrderByRace.put("human", new int[]{0, 3, 1, 2});
+        rowOrderByRace.put("human", new int[]{0, 1, 2, 3});
         rowOrderByRace.put("orc", new int[]{0, 1, 2, 3});
         rowOrderByRace.put("vampire", new int[]{0, 1, 2, 3});
         rowOrderByRace.put("slime", new int[]{0, 1, 2, 3});
 
-        raceAnimations.put("human", loadAnimations("sprites/Unarmed_Run_full.png", rowOrderByRace.get("human")));
+        raceAnimations.put("human", loadAnimations("sprites/Sword_Run_full.png", rowOrderByRace.get("human")));
         raceAnimations.put("orc", loadAnimations("sprites/orc_run_full.png", rowOrderByRace.get("orc")));
         raceAnimations.put("vampire", loadAnimations("sprites/Vampires_Run_full.png", rowOrderByRace.get("vampire")));
         raceAnimations.put("slime", loadAnimations("sprites/Slime_Run_full.png", rowOrderByRace.get("slime")));
@@ -170,8 +170,15 @@ public class GameScreen implements Screen {
                 else if (p.speedX < 0) direccionJugador = LEFT;
                 else if (p.speedX > 0) direccionJugador = RIGHT;
 
-                if (direccionJugador == IDLE) direccionJugador = p.lastRenderDirection;
-                else p.lastRenderDirection = direccionJugador;
+                if (direccionJugador == IDLE) {
+                    System.out.println(p.lastRenderDirection);
+                    direccionJugador = p.lastRenderDirection;
+                }
+                else{
+
+                    p.lastRenderDirection = direccionJugador;
+                    System.out.println(p.lastRenderDirection);
+                }
 
                 TextureRegion currentFrame = animations[direccionJugador].getKeyFrame(
                     estaEnMovimiento ? stateTime : 0,
@@ -254,3 +261,4 @@ public class GameScreen implements Screen {
         @Override public boolean onError(WebSocket webSocket, Throwable error) { return false; }
     }
 }
+//toHome
