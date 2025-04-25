@@ -9,6 +9,11 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.github.czyzby.websocket.WebSocket;
@@ -41,6 +46,9 @@ public class GameScreen implements Screen {
     private final HashMap<String, int[]> rowOrderByRace = new HashMap<>();
 
     private String keyOwnerId = "";
+    private Texture textureUp,textureDown;
+
+    public String attackDirection = "down";
 
     public GameScreen(Main game, WebSocket socket, String userId) {
         this.game = game;
@@ -52,6 +60,36 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
         smallKeyTexture = new Texture(Gdx.files.internal("mapa/key.png"));
+
+        textureUp = new Texture(Gdx.files.internal("swingB.png"));
+        textureDown = new Texture(Gdx.files.internal("swingW.png"));
+
+        TextureRegionDrawable drawableUp = new TextureRegionDrawable(new TextureRegion(textureUp));
+        TextureRegionDrawable drawableDown = new TextureRegionDrawable(new TextureRegion(textureDown));
+
+
+        ImageButton.ImageButtonStyle buttonStyle = new ImageButton.ImageButtonStyle();
+        buttonStyle.imageUp = drawableUp;
+        buttonStyle.imageDown = drawableDown;
+
+        ImageButton button = new ImageButton(buttonStyle);
+
+        button.setPosition(game.viewport.getScreenWidth()/1.3f, 50);
+
+        button.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gson json = new Gson();
+                HashMap<String, Object> message = new HashMap<>();
+                message.put("type", "attack");
+                message.put("value",attackDirection);
+                System.out.println(attackDirection);
+                String jsonMessage = json.toJson(message);
+                if (socket != null && socket.isOpen()) {
+                    socket.send(jsonMessage);
+                }
+            }
+        });
 
         mapRenderer = new MapRender();
         Gdx.input.setInputProcessor(game.Pad);
@@ -72,6 +110,7 @@ public class GameScreen implements Screen {
             public void onDirectionReleased(String direction) {
                 direccion = IDLE;
                 sendMovementMessage("", "", "none");
+                attackDirection = "down";
             }
 
             private void sendMovementMessage(String horizontal, String vertical, String stop) {
@@ -86,6 +125,7 @@ public class GameScreen implements Screen {
                     }
                     message.put("value", vertical + horizontal);
                 }
+                attackDirection = vertical+horizontal;
                 String jsonMessage = json.toJson(message);
                 if (socket != null && socket.isOpen()) {
                     socket.send(jsonMessage);
@@ -95,6 +135,7 @@ public class GameScreen implements Screen {
 
         dPad.setPosition(50, 50);
         game.Pad.addActor(dPad);
+        game.Pad.addActor(button);
 
         rowOrderByRace.put("human", new int[]{0, 1, 2, 3});
         rowOrderByRace.put("orc", new int[]{0, 1, 2, 3});
@@ -124,7 +165,10 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
+
+
         stateTime += delta;
+
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -171,13 +215,13 @@ public class GameScreen implements Screen {
                 else if (p.speedX > 0) direccionJugador = RIGHT;
 
                 if (direccionJugador == IDLE) {
-                    System.out.println(p.lastRenderDirection);
+                    //System.out.println(p.lastRenderDirection);
                     direccionJugador = p.lastRenderDirection;
                 }
                 else{
 
                     p.lastRenderDirection = direccionJugador;
-                    System.out.println(p.lastRenderDirection);
+                    //System.out.println(p.lastRenderDirection);
                 }
 
                 TextureRegion currentFrame = animations[direccionJugador].getKeyFrame(
@@ -228,6 +272,7 @@ public class GameScreen implements Screen {
         @Override
         public boolean onMessage(WebSocket webSocket, String packet) {
             Gson gson = new Gson();
+            System.out.println("[GameScreen] Mensaje: " + packet);
             if (packet.contains("\"type\":\"update\"")) {
                 HashMap data = gson.fromJson(packet, HashMap.class);
                 Object gameStateObj = data.get("gameState");
