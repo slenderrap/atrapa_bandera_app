@@ -25,6 +25,9 @@ import java.util.List;
 
 public class GameScreen implements Screen {
     private float stateTime = 0;
+
+
+
     private final WebSocket socket;
     private final Main game;
     private final String userId;
@@ -39,10 +42,19 @@ public class GameScreen implements Screen {
     private int lastDirection = DOWN;
     private Texture smallKeyTexture;
 
+    private final HashMap<String, Float> attackTimes = new HashMap<>();
+    private final HashMap<String, Boolean> attackingFlags = new HashMap<>();
+
+
 
     private Dpad dPad;
 
     private final HashMap<String, Animation<TextureRegion>[]> raceAnimations = new HashMap<>();
+    private final HashMap<String, Animation<TextureRegion>[]> atakAnimations = new HashMap<>();
+    private final HashMap<String, Animation<TextureRegion>[]> deathAnimations = new HashMap<>();
+    private final HashMap<String, Animation<TextureRegion>[]> hurtAnimations = new HashMap<>();
+    private final HashMap<String, Animation<TextureRegion>[]> walkAnimations = new HashMap<>();
+
     private final HashMap<String, int[]> rowOrderByRace = new HashMap<>();
 
     private String keyOwnerId = "";
@@ -142,20 +154,25 @@ public class GameScreen implements Screen {
         rowOrderByRace.put("vampire", new int[]{0, 1, 2, 3});
         rowOrderByRace.put("slime", new int[]{0, 1, 2, 3});
 
-        raceAnimations.put("human", loadAnimations("sprites/Sword_Run_full.png", rowOrderByRace.get("human")));
-        raceAnimations.put("orc", loadAnimations("sprites/orc_run_full.png", rowOrderByRace.get("orc")));
-        raceAnimations.put("vampire", loadAnimations("sprites/Vampires_Run_full.png", rowOrderByRace.get("vampire")));
-        raceAnimations.put("slime", loadAnimations("sprites/Slime_Run_full.png", rowOrderByRace.get("slime")));
+        raceAnimations.put("human", loadAnimations("sprites/Sword_Run_full.png", rowOrderByRace.get("human"),8));
+        raceAnimations.put("orc", loadAnimations("sprites/orc_run_full.png", rowOrderByRace.get("orc"),8));
+        raceAnimations.put("vampire", loadAnimations("sprites/Vampires_Run_full.png", rowOrderByRace.get("vampire"),8));
+        raceAnimations.put("slime", loadAnimations("sprites/Slime_Run_full.png", rowOrderByRace.get("slime"),8));
+
+        atakAnimations.put("human", loadAnimations("sprites/attack/Sword_attack_full.png", rowOrderByRace.get("human"),8));
+        atakAnimations.put("orc", loadAnimations("sprites/attack/orc_attack_full.png", rowOrderByRace.get("orc"),8));
+        atakAnimations.put("vampire", loadAnimations("sprites/attack/Vampires_Attack_full.png", rowOrderByRace.get("vampire"),12));
+        atakAnimations.put("slime", loadAnimations("sprites/attack/Slime_Attack_full.png", rowOrderByRace.get("slime"),9));
     }
 
-    private Animation<TextureRegion>[] loadAnimations(String path, int[] rowOrder) {
+    private Animation<TextureRegion>[] loadAnimations(String path, int[] rowOrder,int larg) {
         Texture spriteSheet = new Texture(Gdx.files.internal(path));
-        TextureRegion[][] tmpFrames = TextureRegion.split(spriteSheet, spriteSheet.getWidth() / 8, spriteSheet.getHeight() / 4);
+        TextureRegion[][] tmpFrames = TextureRegion.split(spriteSheet, spriteSheet.getWidth() / larg, spriteSheet.getHeight() / 4);
         Animation<TextureRegion>[] animations = new Animation[4];
 
         for (int i = 0; i < 4; i++) {
-            TextureRegion[] row = new TextureRegion[8];
-            for (int j = 0; j < 8; j++) {
+            TextureRegion[] row = new TextureRegion[larg];
+            for (int j = 0; j < larg; j++) {
                 row[j] = tmpFrames[rowOrder[i]][j];
             }
             animations[i] = new Animation<>(0.1f, row);
@@ -215,34 +232,60 @@ public class GameScreen implements Screen {
                 else if (p.speedX > 0) direccionJugador = RIGHT;
 
                 if (direccionJugador == IDLE) {
-                    //System.out.println(p.lastRenderDirection);
                     direccionJugador = p.lastRenderDirection;
-                }
-                else{
-
+                } else {
                     p.lastRenderDirection = direccionJugador;
-                    //System.out.println(p.lastRenderDirection);
                 }
 
-                TextureRegion currentFrame = animations[direccionJugador].getKeyFrame(
-                    estaEnMovimiento ? stateTime : 0,
-                    true
-                );
+                // Obtener estado de ataque individual
+                boolean isAttacking = attackingFlags.getOrDefault(p.id, false);
+                float attackTime = attackTimes.getOrDefault(p.id, 0f);
 
-                game.batch.begin();
-                game.batch.draw(currentFrame, p.x, p.y, p.width, p.height);
+                TextureRegion currentFrame = null;
 
-                if (currentState.keys != null && !currentState.keys.isEmpty()) {
-                    datosLlave key = currentState.keys.get(0);
-                    if (key.keyOwnerId != null && key.keyOwnerId.equals(p.id)) {
-                        float keyDrawX = p.x + p.width / 2f - 6;
-                        float keyDrawY = p.y + p.height + 4;
-                        game.batch.draw(smallKeyTexture, keyDrawX, keyDrawY, 12, 24); // más pequeño
+                if (!p.attacking && !p.isDamaged && p.alive) {
+                    currentFrame = animations[direccionJugador].getKeyFrame(
+                        estaEnMovimiento ? stateTime : 0,
+                        true
+                    );
+                    // Reiniciar flags si no está atacando
+                    attackTimes.put(p.id, 0f);
+                    attackingFlags.put(p.id, false);
+                } else if (p.attacking) {
+                    isAttacking = true;
+                    attackTime += delta;
+
+                    animations = atakAnimations.get(p.race);
+                    if (animations != null && animations[direccionJugador] != null) {
+                        currentFrame = animations[direccionJugador].getKeyFrame(attackTime, false);
+
+                        if (animations[direccionJugador].isAnimationFinished(attackTime)) {
+                            isAttacking = false;
+                            attackTime = 0f;
+                        }
                     }
+                    attackTimes.put(p.id, attackTime);
+                    attackingFlags.put(p.id, isAttacking);
                 }
-                game.batch.end();
 
+                // Dibujar solo si hay frame válido
+                if (currentFrame != null) {
+                    game.batch.begin();
+                    game.batch.draw(currentFrame, p.x, p.y, p.width, p.height);
+
+                    // Dibujar la llave si es suya
+                    if (currentState.keys != null && !currentState.keys.isEmpty()) {
+                        datosLlave key = currentState.keys.get(0);
+                        if (key.keyOwnerId != null && key.keyOwnerId.equals(p.id)) {
+                            float keyDrawX = p.x + p.width / 2f - 6;
+                            float keyDrawY = p.y + p.height + 4;
+                            game.batch.draw(smallKeyTexture, keyDrawX, keyDrawY, 12, 24);
+                        }
+                    }
+                    game.batch.end();
+                }
             }
+
         }
     }
 
@@ -283,6 +326,8 @@ public class GameScreen implements Screen {
 
                 for (datosJugador p : currentState.players) {
                     p.y = mapaAlturaPx - p.y - p.height;
+                    //System.out.println("Attaking: "+p.attacking +", Damaged: "+p.isDamaged +" , Alive: " +p.alive);
+
                 }
                 if (currentState.keys != null && !currentState.keys.isEmpty()) {
                     datosLlave key = currentState.keys.get(0);

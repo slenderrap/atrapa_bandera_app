@@ -10,6 +10,12 @@ public class datosJugador {
     public String direction;
     public String race;
     public boolean onIce;
+    public boolean attacking;
+    public boolean alive;
+    public boolean isDamaged;
+
+
+
 
 
     public int lastRenderDirection = 1;

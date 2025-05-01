@@ -29,6 +29,8 @@ public class WaitingRoomScreen implements Screen {
     private int port = 443;
     private String userId;
 
+    //{"type":"update","gameState":{"tickCounter":9,"level":"Level 0","players":[{"id":"C9A653","x":935.1043501280346,"y":296.2906907826776,"width":32,"height":32,"speedX":0,"speedY":0,"hp":100,"damage":10,"coolDown":0,"direction":"none","race":"slime","onIce":false,"attaking":false,"alive":true,"isDamaged":false,"flagOwner":false}],"flagOwnerId":"","keys":[{"x":454.6680943357515,"y":243.35094927906894,"width":16,"height":32,"keyOwnerId":"","pickedUp":false}],"elapsedTime":47,"gameOver":false}}
+    //"attaking":false,"alive":true,"isDamaged":false,"flagOwner":false
     public WaitingRoomScreen(Main game) {
         this.game = game;
     }
@@ -81,7 +83,7 @@ public class WaitingRoomScreen implements Screen {
 
             @Override
             public boolean onMessage(WebSocket webSocket, String packet) {
-                System.out.println("Mensaje: " + packet);
+                //System.out.println("Mensaje: " + packet);
                 Gson gson = new Gson();
                 if (packet.contains("\"type\":\"newSize\"")) {
                     HashMap data = gson.fromJson(packet, HashMap.class);
