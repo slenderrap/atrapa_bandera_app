@@ -96,7 +96,6 @@ public class WaitingRoomScreen implements Screen {
                 } else if (packet.contains("\"type\":\"gameStart\"")) {
                     Gdx.app.postRunnable(() -> {
                         game.setScreen(new GameScreen(game, socket, userId));
-
                         dispose();
                     });
                 } else if (packet.contains("\"type\":\"newClient\"")) {

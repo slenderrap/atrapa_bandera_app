@@ -20,4 +20,5 @@ public class datosJugador {
 
     public int lastRenderDirection = 1;
 
+    public int hp;
 }

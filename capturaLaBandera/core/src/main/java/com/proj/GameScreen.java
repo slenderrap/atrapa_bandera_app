@@ -52,13 +52,19 @@ public class GameScreen implements Screen {
     private final HashMap<String, Animation<TextureRegion>[]> raceAnimations = new HashMap<>();
     private final HashMap<String, Animation<TextureRegion>[]> atakAnimations = new HashMap<>();
     private final HashMap<String, Animation<TextureRegion>[]> deathAnimations = new HashMap<>();
-    private final HashMap<String, Animation<TextureRegion>[]> hurtAnimations = new HashMap<>();
+    private final HashMap<String, Animation<TextureRegion>[]> hurtWalkAnimations = new HashMap<>();
+    private final HashMap<String, Animation<TextureRegion>[]> hurtRunAnimations = new HashMap<>();
     private final HashMap<String, Animation<TextureRegion>[]> walkAnimations = new HashMap<>();
 
     private final HashMap<String, int[]> rowOrderByRace = new HashMap<>();
 
     private String keyOwnerId = "";
     private Texture textureUp,textureDown;
+
+    private final HashMap<String, Float> damageTimes = new HashMap<>();
+
+
+
 
     public String attackDirection = "down";
 
@@ -163,6 +169,22 @@ public class GameScreen implements Screen {
         atakAnimations.put("orc", loadAnimations("sprites/attack/orc_attack_full.png", rowOrderByRace.get("orc"),8));
         atakAnimations.put("vampire", loadAnimations("sprites/attack/Vampires_Attack_full.png", rowOrderByRace.get("vampire"),12));
         atakAnimations.put("slime", loadAnimations("sprites/attack/Slime_Attack_full.png", rowOrderByRace.get("slime"),9));
+
+        walkAnimations.put("human", loadAnimations("sprites/Sword_Walk_full.png", rowOrderByRace.get("human"), 6));
+        walkAnimations.put("orc", loadAnimations("sprites/orc_walk_full.png", rowOrderByRace.get("orc"), 6));
+        walkAnimations.put("vampire", loadAnimations("sprites/Vampires_Walk_full.png", rowOrderByRace.get("vampire"), 6));
+        walkAnimations.put("slime", loadAnimations("sprites/Slime_Walk_full.png", rowOrderByRace.get("slime"), 8));
+
+        hurtWalkAnimations.put("human", loadAnimations("sprites/hurt/Sword_Walk_Hurt_full.png", rowOrderByRace.get("human"), 6));
+        hurtWalkAnimations.put("orc", loadAnimations("sprites/hurt/Orc_Walk_Hurt_full.png", rowOrderByRace.get("orc"), 6));
+        hurtWalkAnimations.put("vampire", loadAnimations("sprites/hurt/Vampires_Walk_Hurt_full.png", rowOrderByRace.get("vampire"), 6));
+        hurtWalkAnimations.put("slime", loadAnimations("sprites/hurt/Slime_Walk_Hurt_full.png", rowOrderByRace.get("slime"), 6));
+
+        hurtRunAnimations.put("human", loadAnimations("sprites/hurt/Sword_Run_Hurt_full.png", rowOrderByRace.get("human"), 8));
+        hurtRunAnimations.put("orc", loadAnimations("sprites/hurt/Orc_Run_Hurt_full.png", rowOrderByRace.get("orc"), 8));
+        hurtRunAnimations.put("vampire", loadAnimations("sprites/hurt/Vampires_Run_Hurt_full.png", rowOrderByRace.get("vampire"), 8));
+        hurtRunAnimations.put("slime", loadAnimations("sprites/hurt/Slime_Run_Hurt_full.png", rowOrderByRace.get("slime"), 8));
+
     }
 
     private Animation<TextureRegion>[] loadAnimations(String path, int[] rowOrder,int larg) {
@@ -221,70 +243,98 @@ public class GameScreen implements Screen {
 
         if (currentState != null) {
             for (datosJugador p : currentState.players) {
-                Animation<TextureRegion>[] animations = raceAnimations.get(p.race);
-                if (animations == null) continue;
-
                 boolean estaEnMovimiento = (p.speedX != 0 || p.speedY != 0);
+                boolean tieneLlave = false;
+                boolean usaWalk = false;
+
+                if (currentState.keys != null && !currentState.keys.isEmpty()) {
+                    datosLlave key = currentState.keys.get(0);
+                    if (key.keyOwnerId != null && key.keyOwnerId.equals(p.id)) {
+                        tieneLlave = true;
+                        usaWalk = estaEnMovimiento;
+                    }
+                }
+
                 int direccionJugador = IDLE;
                 if (p.speedY > 0) direccionJugador = UP;
                 else if (p.speedY < 0) direccionJugador = DOWN;
                 else if (p.speedX < 0) direccionJugador = LEFT;
                 else if (p.speedX > 0) direccionJugador = RIGHT;
+                if (direccionJugador == IDLE) direccionJugador = 0;
 
-                if (direccionJugador == IDLE) {
-                    direccionJugador = p.lastRenderDirection;
-                } else {
-                    p.lastRenderDirection = direccionJugador;
+                // Animaciones base
+                Animation<TextureRegion>[] baseAnim = usaWalk
+                    ? walkAnimations.get(p.race)
+                    : raceAnimations.get(p.race);
+                Animation<TextureRegion>[] attackAnim = atakAnimations.get(p.race);
+                Animation<TextureRegion>[] hurtAnim = null;
+
+                float velocidad = (float) Math.sqrt(p.speedX * p.speedX + p.speedY * p.speedY);
+                boolean estaCorriendo = velocidad >= 60f;
+                if (p.isDamaged) {
+                    hurtAnim = estaCorriendo
+                        ? hurtRunAnimations.get(p.race)
+                        : hurtWalkAnimations.get(p.race);
                 }
 
-                // Obtener estado de ataque individual
-                boolean isAttacking = attackingFlags.getOrDefault(p.id, false);
                 float attackTime = attackTimes.getOrDefault(p.id, 0f);
-
+                float damageTime = damageTimes.getOrDefault(p.id, 0f);
+                boolean isAttacking = attackingFlags.getOrDefault(p.id, false);
                 TextureRegion currentFrame = null;
 
-                if (!p.attacking && !p.isDamaged && p.alive) {
-                    currentFrame = animations[direccionJugador].getKeyFrame(
-                        estaEnMovimiento ? stateTime : 0,
-                        true
-                    );
-                    // Reiniciar flags si no está atacando
+                if (p.isDamaged && hurtAnim != null && hurtAnim[direccionJugador] != null) {
+                    damageTime += delta;
+                    currentFrame = hurtAnim[direccionJugador].getKeyFrame(damageTime, false);
+                    if (hurtAnim[direccionJugador].isAnimationFinished(damageTime)) {
+                        damageTime = 0f;
+                    }
                     attackTimes.put(p.id, 0f);
                     attackingFlags.put(p.id, false);
-                } else if (p.attacking) {
-                    isAttacking = true;
+                    damageTimes.put(p.id, damageTime);
+
+                } else if (p.attacking && attackAnim != null && attackAnim[direccionJugador] != null) {
                     attackTime += delta;
-
-                    animations = atakAnimations.get(p.race);
-                    if (animations != null && animations[direccionJugador] != null) {
-                        currentFrame = animations[direccionJugador].getKeyFrame(attackTime, false);
-
-                        if (animations[direccionJugador].isAnimationFinished(attackTime)) {
-                            isAttacking = false;
-                            attackTime = 0f;
-                        }
+                    currentFrame = attackAnim[direccionJugador].getKeyFrame(attackTime, false);
+                    if (attackAnim[direccionJugador].isAnimationFinished(attackTime)) {
+                        attackTime = 0f;
+                        isAttacking = false;
                     }
                     attackTimes.put(p.id, attackTime);
                     attackingFlags.put(p.id, isAttacking);
+                    damageTimes.put(p.id, 0f);
+
+                } else if (baseAnim != null && baseAnim[direccionJugador] != null) {
+                    currentFrame = baseAnim[direccionJugador].getKeyFrame(
+                        estaEnMovimiento ? stateTime : 0, true);
+                    attackTimes.put(p.id, 0f);
+                    damageTimes.put(p.id, 0f);
+                    attackingFlags.put(p.id, false);
                 }
 
-                // Dibujar solo si hay frame válido
                 if (currentFrame != null) {
                     game.batch.begin();
                     game.batch.draw(currentFrame, p.x, p.y, p.width, p.height);
 
-                    // Dibujar la llave si es suya
-                    if (currentState.keys != null && !currentState.keys.isEmpty()) {
-                        datosLlave key = currentState.keys.get(0);
-                        if (key.keyOwnerId != null && key.keyOwnerId.equals(p.id)) {
-                            float keyDrawX = p.x + p.width / 2f - 6;
-                            float keyDrawY = p.y + p.height + 4;
-                            game.batch.draw(smallKeyTexture, keyDrawX, keyDrawY, 12, 24);
-                        }
+                    if (tieneLlave) {
+                        float keyDrawX = p.x + p.width / 2f - 6;
+                        float keyDrawY = p.y + p.height + 4;
+                        game.batch.draw(smallKeyTexture, keyDrawX, keyDrawY, 12, 24);
                     }
                     game.batch.end();
                 }
+
+                // Dibujar barra de vida
+                shapeRenderer.setProjectionMatrix(game.camera.combined);
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                shapeRenderer.setColor(Color.DARK_GRAY);
+                shapeRenderer.rect(p.x, p.y + p.height, p.width, 5);
+
+                float lifePercent = Math.max(0f, Math.min(p.hp / 100f, 1f));
+                shapeRenderer.setColor(new Color(1 - lifePercent, lifePercent, 0, 1));
+                shapeRenderer.rect(p.x, p.y + p.height, p.width * lifePercent, 5);
+                shapeRenderer.end();
             }
+
 
         }
     }
