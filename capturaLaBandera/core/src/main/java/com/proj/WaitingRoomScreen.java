@@ -72,6 +72,15 @@ public class WaitingRoomScreen implements Screen {
             @Override
             public boolean onOpen(WebSocket webSocket) {
                 System.out.println("Conectado al servidor");
+                String email = Gdx.files.local("email.txt").readString();
+                System.out.println("Enviando email al servidor: " + email);
+
+                // Crear mensaje JSON con el email
+                HashMap<String, String> data = new HashMap<>();
+                data.put("email", email);
+
+                String json = new Gson().toJson(data);
+                webSocket.send(json);
                 return true;
             }
 

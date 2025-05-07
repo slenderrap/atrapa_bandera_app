@@ -2,6 +2,7 @@ package com.proj;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
@@ -30,6 +31,9 @@ public class FirstScreen implements Screen {
     @Override
     public void render(float delta) {
         ScreenUtils.clear(Color.BLACK);
+
+        boolean hasEmail = Gdx.files.local("email.txt").exists();
+
 
         game.viewport.apply();
         game.batch.setProjectionMatrix(game.viewport.getCamera().combined);
@@ -66,8 +70,17 @@ public class FirstScreen implements Screen {
         game.stage.draw();
         if (Gdx.input.isTouched() || Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
             //game.setScreen(new GameScreen(game));
-            game.setScreen(new WaitingRoomScreen(game));
+
+            game.stage.clear(); // limpia los actores de la pantalla actual
+            if (hasEmail) {
+                game.setScreen(new WaitingRoomScreen(game));
+            } else {
+                game.setScreen(new iniciarSesionScreen(game));
+            }
             dispose();
+
+            //game.setScreen(new WaitingRoomScreen(game));
+
         }
     }
 

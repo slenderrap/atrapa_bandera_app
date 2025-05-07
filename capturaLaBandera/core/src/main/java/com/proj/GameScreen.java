@@ -51,7 +51,7 @@ public class GameScreen implements Screen {
 
     private final HashMap<String, Animation<TextureRegion>[]> raceAnimations = new HashMap<>();
     private final HashMap<String, Animation<TextureRegion>[]> atakAnimations = new HashMap<>();
-    private final HashMap<String, Animation<TextureRegion>[]> deathAnimations = new HashMap<>();
+    //private final HashMap<String, Animation<TextureRegion>[]> deathAnimations = new HashMap<>();
     private final HashMap<String, Animation<TextureRegion>[]> hurtWalkAnimations = new HashMap<>();
     private final HashMap<String, Animation<TextureRegion>[]> hurtRunAnimations = new HashMap<>();
     private final HashMap<String, Animation<TextureRegion>[]> walkAnimations = new HashMap<>();
