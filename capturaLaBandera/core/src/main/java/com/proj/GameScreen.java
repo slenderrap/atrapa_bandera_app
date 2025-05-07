@@ -236,6 +236,8 @@ public class GameScreen implements Screen {
                 0
             );
             game.camera.update();
+        } else {
+            System.out.println("ES NULL");
         }
 
         game.viewport.apply();

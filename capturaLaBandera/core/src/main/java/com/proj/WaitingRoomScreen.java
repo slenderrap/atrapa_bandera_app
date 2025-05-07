@@ -28,6 +28,7 @@ public class WaitingRoomScreen implements Screen {
     private String address = "bandera2.ieti.site";
     private int port = 443;
     private String userId;
+    public String[] email = Gdx.files.local("token.txt").readString().split("\r?\n");
 
     //{"type":"update","gameState":{"tickCounter":9,"level":"Level 0","players":[{"id":"C9A653","x":935.1043501280346,"y":296.2906907826776,"width":32,"height":32,"speedX":0,"speedY":0,"hp":100,"damage":10,"coolDown":0,"direction":"none","race":"slime","onIce":false,"attaking":false,"alive":true,"isDamaged":false,"flagOwner":false}],"flagOwnerId":"","keys":[{"x":454.6680943357515,"y":243.35094927906894,"width":16,"height":32,"keyOwnerId":"","pickedUp":false}],"elapsedTime":47,"gameOver":false}}
     //"attaking":false,"alive":true,"isDamaged":false,"flagOwner":false
@@ -67,20 +68,21 @@ public class WaitingRoomScreen implements Screen {
         stage.addActor(table);
 
         // Conexión WebSocket
-        socket = WebSockets.newSocket(WebSockets.toSecureWebSocketUrl(address, port));
+        socket = WebSockets.newSocket("wss://"+address+":"+port+"?token="+email[1].replace("token=",""));
         socket.addListener(new WebSocketListener() {
             @Override
             public boolean onOpen(WebSocket webSocket) {
                 System.out.println("Conectado al servidor");
-                String email = Gdx.files.local("email.txt").readString();
-                System.out.println("Enviando email al servidor: " + email);
 
+                System.out.println("Enviando email al servidor: " + email[1].replace("=",""));
+                Gson json = new Gson();
                 // Crear mensaje JSON con el email
                 HashMap<String, String> data = new HashMap<>();
-                data.put("email", email);
+                data.put("authorization", email[1].replace("token=",""));
 
-                String json = new Gson().toJson(data);
-                webSocket.send(json);
+                String jsonMessage = json.toJson(data);
+                System.out.println(jsonMessage);
+                webSocket.send(jsonMessage);
                 return true;
             }
 
@@ -92,7 +94,7 @@ public class WaitingRoomScreen implements Screen {
 
             @Override
             public boolean onMessage(WebSocket webSocket, String packet) {
-                //System.out.println("Mensaje: " + packet);
+                System.out.println("[waiting room] Mensaje: " + packet);
                 Gson gson = new Gson();
                 if (packet.contains("\"type\":\"newSize\"")) {
                     HashMap data = gson.fromJson(packet, HashMap.class);
@@ -110,6 +112,7 @@ public class WaitingRoomScreen implements Screen {
                 } else if (packet.contains("\"type\":\"newClient\"")) {
                     HashMap<String, String> newClientMsg = gson.fromJson(packet, HashMap.class);
                     if (userId == null) {
+                        System.out.println(newClientMsg.get("id"));
                         userId = newClientMsg.get("id");
                         System.out.println("Mi ID en WaitingRoom es: " + userId);
                     }

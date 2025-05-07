@@ -32,7 +32,7 @@ public class FirstScreen implements Screen {
     public void render(float delta) {
         ScreenUtils.clear(Color.BLACK);
 
-        boolean hasEmail = Gdx.files.local("email.txt").exists();
+        boolean hasEmail = Gdx.files.local("token.txt").exists();
 
 
         game.viewport.apply();
@@ -77,9 +77,10 @@ public class FirstScreen implements Screen {
             } else {
                 game.setScreen(new iniciarSesionScreen(game));
             }
+            //game.setScreen(new WaitingRoomScreen(game));
             dispose();
 
-            //game.setScreen(new WaitingRoomScreen(game));
+
 
         }
     }

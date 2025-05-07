@@ -57,30 +57,38 @@ public class iniciarSesionScreen implements Screen {
                 Gdx.net.sendHttpRequest(request, new Net.HttpResponseListener() {
                     @Override
                     public void handleHttpResponse(Net.HttpResponse httpResponse) {
+                        int status = httpResponse.getStatus().getStatusCode();
+                        String response = httpResponse.getResultAsString();
 
-                        Gdx.app.postRunnable(() -> {
-                            System.out.println(httpResponse.getHeaders());
-                            int status = httpResponse.getStatus().getStatusCode();
-                            String response = httpResponse.getResultAsString();
-                            System.out.println("STATUS: " + status);
-                            System.out.println("RESPONSE: " + response);
+                        System.out.println("STATUS: " + status);
+                        System.out.println("RESPONSE: " + response);
 
-                            if (status == 200) {
-                                messageLabel.setText("Registro correcto. Entrando en la sala de espera...");
+                        if (status == 200) {
+                            try {
+                                Map<String, Object> responseMap = new Gson().fromJson(response, Map.class);
+                                if (responseMap != null && responseMap.containsKey("token")) {
+                                    String token = (String) responseMap.get("token");
 
-                                // Guardar solo el email en un archivo
-                                String email = emailField.getText();
-                                Gdx.files.local("email.txt").writeString(email, false);
-                                System.out.println("📧 Email guardado: " + email);
+                                    String email = emailField.getText();
 
-                                game.setScreen(new WaitingRoomScreen(game));
-                                dispose();
+
+                                    // Guardar token y email en archivo
+                                    String contenido = "email=" + email + "\ntoken=" + token;
+                                    Gdx.files.local("token.txt").writeString(contenido, false);
+
+                                    System.out.println("TOKEN RECIBIDO: " + token);
+                                    game.setScreen(new WaitingRoomScreen(game));
+                                    dispose();
+                                } else {
+                                    System.err.println("La respuesta no contiene token o es nula.");
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al parsear JSON: " + e.getMessage());
                             }
+                        } else {
+                            System.err.println("Error en la solicitud: " + response);
 
-                            else {
-                                messageLabel.setText("Error al registrar: " + (response.isEmpty() ? "Respuesta vacía del servidor" : response));
-                            }
-                        });
+                        }
                     }
 
                     @Override
